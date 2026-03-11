@@ -1,0 +1,40 @@
+# Python
+venv/
+photo_backend/venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+env/
+.env
+*.env
+*.sqlite3
+*.db
+
+# Node
+node_modules/
+dist/
+build/
+
+# Editor directories and files
+.vscode/
+.idea/
+.DS_Store
+
+# Application data
+/uploads/
+
+# Backend artifacts to ignore
+photo_backend/test_images/
+photo_backend/uploads/
+photo_backend/*.db
+photo_backend/.env
+
+# Frontend env
+photo_frontend/.env
+
+# Logs
+*.log
+
+# OS generated files
+Thumbs.db
