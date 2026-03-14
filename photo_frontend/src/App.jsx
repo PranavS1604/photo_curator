@@ -96,6 +96,23 @@ const styles = `
   .btn-submit:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 15px 35px rgba(212, 175, 55, 0.4); }
   .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
 
+  /* VIP TARGET ITEM STYLES */
+  .target-item { display: flex; gap: 1rem; align-items: center; margin-top: 1rem; background: rgba(0,0,0,0.3); padding: 0.8rem; border-radius: 10px; border: 1px solid rgba(212, 175, 55, 0.15); animation: fadeIn 0.3s ease; }
+  .target-item img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid var(--gold-primary); }
+  .target-item input { flex: 1; padding: 0.6rem 1rem; background: rgba(0,0,0,0.5); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 8px; color: #fff; outline: none; transition: 0.3s; font-family: 'Poppins', sans-serif; }
+  .target-item input:focus { border-color: var(--gold-primary); }
+  .target-item button { background: rgba(248, 113, 113, 0.1); border: 1px solid rgba(248, 113, 113, 0.3); color: var(--color-bad); border-radius: 8px; width: 36px; height: 36px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; }
+  .target-item button:hover { background: var(--color-bad); color: #000; }
+
+  /* APERTURE AI CHAT STYLES */
+  .aperture-container { padding: 2.5rem; background: linear-gradient(135deg, rgba(157, 78, 221, 0.05), rgba(0,0,0,0.6)); border: 1px solid var(--purple-royal); border-radius: 16px; margin-bottom: 2.5rem; box-shadow: 0 10px 40px rgba(157, 78, 221, 0.15); }
+  .aperture-title { color: var(--purple-light); margin-bottom: 1.5rem; font-family: 'Cinzel', serif; font-size: 1.6rem; display: flex; align-items: center; gap: 0.8rem; }
+  .aperture-line { opacity: 0; animation: fadeInLine 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; line-height: 1.7; color: var(--text-main); margin-bottom: 1rem; font-size: 1.05rem; }
+  .aperture-caption-card { background: rgba(212, 175, 55, 0.05); border-left: 4px solid var(--gold-primary); padding: 1.2rem 1.5rem; margin: 1rem 0; border-radius: 0 12px 12px 0; transition: 0.3s ease; opacity: 0; animation: fadeInLine 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; font-style: italic; color: #fff; font-size: 1.05rem; letter-spacing: 0.01em; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+  .aperture-caption-card:hover { background: rgba(212, 175, 55, 0.12); transform: translateX(8px); border-left-color: var(--purple-light); }
+
+  @keyframes fadeInLine { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
   .gallery-container { width: 100%; animation: fadeIn 0.6s ease; }
   .gallery-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(212, 175, 55, 0.2); padding-bottom: 2rem; margin-bottom: 2.5rem; flex-wrap: wrap; gap: 1.5rem; }
   
@@ -191,7 +208,10 @@ function App() {
   
   const [currentView, setCurrentView] = useState('upload');
   const [title, setTitle] = useState('');
+  
+  // NEW: targetFaces now stores objects: { id, file, customName }
   const [targetFaces, setTargetFaces] = useState([]);
+  
   const [photos, setPhotos] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
   const [formKey, setFormKey] = useState(0);
@@ -206,9 +226,11 @@ function App() {
   const [targetDropActive, setTargetDropActive] = useState(false);
   const [photoDropActive, setPhotoDropActive] = useState(false);
 
-  // Export Loading States
   const [isDownloading, setIsDownloading] = useState(false);
   const [isExportingDrive, setIsExportingDrive] = useState(false);
+  
+  const [agentMessage, setAgentMessage] = useState(null);
+  const [isAgentThinking, setIsAgentThinking] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
@@ -231,7 +253,6 @@ function App() {
 
   const handleLoginSuccess = async (credentialResponse) => {
     try {
-      // NOTE: Using backticks ` ` here!
       const res = await axios.post(`${API_BASE}/auth/google`, {
         token: credentialResponse.credential
       });
@@ -273,6 +294,7 @@ function App() {
       setAlbumId(id);
       setCurrentView('gallery');
       setActiveTab('vips');
+      setAgentMessage(null);
     }
     try {
       const res = await axios.get(`${API_BASE}/albums/${id}`);
@@ -289,6 +311,25 @@ function App() {
     } catch (e) { console.error(e); }
   };
 
+  // --- NEW: Handle custom naming for VIP Targets ---
+  const processTargetFiles = (files) => {
+    const newFaces = Array.from(files).map((f, i) => ({
+      id: Date.now() + i,
+      file: f,
+      customName: f.name.split('.')[0] // Default to original filename
+    }));
+    setTargetFaces(prev => [...prev, ...newFaces]);
+  };
+
+  const handleTargetNameChange = (id, newName) => {
+    setTargetFaces(prev => prev.map(face => face.id === id ? { ...face, customName: newName } : face));
+  };
+
+  const removeTargetFace = (id) => {
+    setTargetFaces(prev => prev.filter(face => face.id !== id));
+  };
+  // ------------------------------------------------
+
   const handleUpload = async (e) => {
     e.preventDefault();
     if (!title || !photos || photos.length === 0) return;
@@ -298,9 +339,16 @@ function App() {
       const albumForm = new FormData();
       albumForm.append('title', title);
       
+      // NEW: Rename the File objects on the fly before sending!
       if (targetFaces && targetFaces.length > 0) {
         for (let i = 0; i < targetFaces.length; i++) {
-          if (targetFaces[i]?.name) albumForm.append('target_faces', targetFaces[i]);
+          const faceObj = targetFaces[i];
+          const ext = faceObj.file.name.split('.').pop() || 'jpg';
+          const safeName = faceObj.customName.replace(/[^a-zA-Z0-9 ]/g, '').trim().replace(/ /g, '_') || 'VIP';
+          
+          // Magic trick: Create a new File object with the user's custom name!
+          const renamedFile = new File([faceObj.file], `${safeName}.${ext}`, { type: faceObj.file.type });
+          albumForm.append('target_faces', renamedFile);
         }
       }
       
@@ -321,6 +369,20 @@ function App() {
     } finally {
       setIsUploading(false);
       setTitle(''); setPhotos([]); setTargetFaces([]); setFormKey(prev => prev + 1);
+    }
+  };
+
+  const handleAskAperture = async () => {
+    setIsAgentThinking(true);
+    setAgentMessage(null);
+    try {
+      const res = await axios.post(`${API_BASE}/albums/${albumId}/curator-chat`);
+      setAgentMessage(res.data.agent_reply);
+    } catch (e) {
+      console.error("Aperture AI Error:", e);
+      alert("Aperture AI failed to respond. Please check your backend terminal.");
+    } finally {
+      setIsAgentThinking(false);
     }
   };
 
@@ -389,9 +451,13 @@ function App() {
 
   const handleDragOver = (e, setter) => { e.preventDefault(); setter(true); };
   const handleDragLeave = (e, setter) => { e.preventDefault(); setter(false); };
-  const handleDrop = (e, fileSetter, activeSetter) => {
-    e.preventDefault(); activeSetter(false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) { fileSetter(e.dataTransfer.files); }
+  const handleDropPhotos = (e) => {
+    e.preventDefault(); setPhotoDropActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) { setPhotos(e.dataTransfer.files); }
+  };
+  const handleDropTargets = (e) => {
+    e.preventDefault(); setTargetDropActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) { processTargetFiles(e.dataTransfer.files); }
   };
 
   const allPhotos = Array.isArray(albumData?.results) ? albumData.results : [];
@@ -509,24 +575,43 @@ function App() {
               <div className="upload-card">
                 <form key={formKey} onSubmit={handleUpload}>
                   <div className="field">
-                    <label className="label">Album Title</label>
-                    <input className="input" type="text" value={title} onChange={e => setTitle(e.target.value)} required placeholder="e.g. Bali Vacation 2026" />
+                    <label className="label">Album/Event Title</label>
+                    <input className="input" type="text" value={title} onChange={e => setTitle(e.target.value)} required placeholder="e.g. Ski Trip in the Alps 2026" />
                   </div>
                   
                   <div className="field">
                     <label className="label">VIP Targets (Optional)</label>
-                    <div className={`drop-zone small ${targetDropActive ? ' active' : ''}`} onDragOver={(e) => handleDragOver(e, setTargetDropActive)} onDragLeave={(e) => handleDragLeave(e, setTargetDropActive)} onDrop={(e) => handleDrop(e, setTargetFaces, setTargetDropActive)}>
-                      <input type="file" multiple accept="image/*" onChange={e => setTargetFaces(e.target.files)} />
+                    <div className={`drop-zone small ${targetDropActive ? ' active' : ''}`} onDragOver={(e) => handleDragOver(e, setTargetDropActive)} onDragLeave={(e) => handleDragLeave(e, setTargetDropActive)} onDrop={handleDropTargets}>
+                      <input type="file" multiple accept="image/*" onChange={e => processTargetFiles(e.target.files)} />
                       <div className="drop-content">
-                        <div className="drop-label">Select reference selfies of people you want to isolate</div>
-                        {targetFaces?.length > 0 && <span style={{color:'var(--gold-primary)', fontWeight:'600'}}>✓ {targetFaces.length} attached</span>}
+                        <div className="drop-label">Drop reference selfies here, then type their names below!</div>
                       </div>
                     </div>
+
+                    {/* NEW: Custom Naming UI for Target Faces */}
+                    {targetFaces.length > 0 && (
+                      <div style={{ marginTop: '1.5rem' }}>
+                        <div className="label" style={{ fontSize: '0.8rem', color: 'var(--purple-light)' }}>Name your targets so the AI recognizes them:</div>
+                        {targetFaces.map((face) => (
+                          <div key={face.id} className="target-item">
+                            <img src={URL.createObjectURL(face.file)} alt="Preview" />
+                            <input 
+                              type="text" 
+                              value={face.customName} 
+                              onChange={(e) => handleTargetNameChange(face.id, e.target.value)} 
+                              placeholder="Enter person's name..."
+                              required
+                            />
+                            <button type="button" onClick={() => removeTargetFace(face.id)}>✖</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
-                  <div className="field">
+                  <div className="field" style={{marginTop: '2.5rem'}}>
                     <label className="label">Raw Event Photos</label>
-                    <div className={`drop-zone ${photoDropActive ? ' active' : ''}`} onDragOver={(e) => handleDragOver(e, setPhotoDropActive)} onDragLeave={(e) => handleDragLeave(e, setPhotoDropActive)} onDrop={(e) => handleDrop(e, setPhotos, setPhotoDropActive)}>
+                    <div className={`drop-zone ${photoDropActive ? ' active' : ''}`} onDragOver={(e) => handleDragOver(e, setPhotoDropActive)} onDragLeave={(e) => handleDragLeave(e, setPhotoDropActive)} onDrop={handleDropPhotos}>
                       <input type="file" multiple accept="image/*" onChange={e => setPhotos(e.target.files)} required />
                       <div className="drop-content">
                         <span className="drop-icon">📂</span>
@@ -561,9 +646,39 @@ function App() {
                     <button className="btn-action-head btn-delete" onClick={handleDeleteAlbum}>
                       🗑️ Delete
                     </button>
+                    
+                    <button className="btn-action-head" onClick={handleAskAperture} disabled={isAgentThinking} style={{ borderColor: 'var(--purple-royal)', color: 'var(--purple-light)' }}>
+                      {isAgentThinking ? <span className="spinner-small" style={{borderColor:'var(--purple-dim)', borderTopColor:'var(--purple-light)'}} /> : '🤖'} 
+                      {isAgentThinking ? 'Aperture is orchestrating...' : 'Ask Aperture AI'}
+                    </button>
                   </div>
                 )}
               </div>
+
+              {/* NEW: The Beautiful Animated Aperture AI Response Box */}
+              {agentMessage && (
+                <div className="aperture-container">
+                  <h3 className="aperture-title">✨ Aperture AI Analysis</h3>
+                  <div className="aperture-content">
+                    {agentMessage.split('\n').map((line, idx) => {
+                      if (!line.trim()) return null; 
+                      
+                      // Check if the line is an Instagram caption (starts with a number like "1.")
+                      const isCaption = /^\d+\./.test(line.trim());
+                      
+                      return (
+                        <div 
+                          key={idx} 
+                          className={isCaption ? "aperture-caption-card" : "aperture-line"}
+                          style={{ animationDelay: `${idx * 0.08}s` }} 
+                        >
+                          {line}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {albumData?.processing_status !== 'completed' ? (
                 <div className="progress-container">
@@ -618,7 +733,7 @@ function App() {
                               {activeTab === 'vips' && (
                                 <span className="badge vip">
                                   {photo.matched_target_path && <img className="avatar" src={`${API_BASE}/uploads/${albumId}/${photo.matched_target_path}`} alt="VIP" onError={(e) => { e.target.style.display = 'none'; }}/>}
-                                  🎯 {cleanName}
+                                  🎯 {cleanName.replace(/_/g, ' ')}
                                 </span>
                               )}
                               {activeTab === 'kept' && <span className="badge kept">✨ QUALITY SHOT</span>}

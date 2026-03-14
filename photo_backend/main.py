@@ -6,6 +6,9 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from pydantic import BaseModel
 import os
+import requests
+import PIL.Image
+import google.generativeai as genai
 import shutil
 import jwt
 import zipfile
@@ -17,7 +20,8 @@ from googleapiclient.http import MediaFileUpload
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 from dotenv import load_dotenv # <--- NEW IMPORT
-
+import base64
+from openai import OpenAI
 import models
 import database
 from worker import process_album_task
@@ -28,6 +32,7 @@ load_dotenv()
 # --- UPDATED SECURITY CONSTANTS ---
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 JWT_SECRET = os.getenv("JWT_SECRET") 
+DO_MODEL_ACCESS_KEY = os.getenv("DO_MODEL_ACCESS_KEY")
 ALGORITHM = "HS256"
 
 if not GOOGLE_CLIENT_ID or not JWT_SECRET:
@@ -301,3 +306,152 @@ def export_to_drive(album_id: int, req: DriveExportRequest, db: Session = Depend
     except Exception as e:
         print(f"Drive Upload Error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to upload to Google Drive.")
+
+def encode_image(image_path):
+    """Helper function to convert local images to Base64 for the AI"""
+    with open(image_path, "rb") as image_file:
+        return base64.b64encode(image_file.read()).decode('utf-8')
+
+
+# @app.post("/albums/{album_id}/curator-chat")
+# def chat_with_curator(album_id: int, db: Session = Depends(database.get_db), current_user: models.User = Depends(get_current_user)):
+#     """Talks directly to our UI-Managed DO Agent!"""
+#     album = db.query(models.Album).filter(models.Album.id == album_id, models.Album.user_id == current_user.id).first()
+#     if not album:
+#         raise HTTPException(status_code=404, detail="Album not found")
+
+#     # 1. Gather Basic Stats
+#     photos = db.query(models.Photo).filter(models.Photo.album_id == album_id).all()
+#     total = len(photos)
+#     vips = [p for p in photos if p.has_target_face]
+#     keepers = [p for p in photos if p.status == 'kept' and not p.has_target_face]
+#     blurry = [p for p in photos if p.is_blurry]
+#     duplicates = [p for p in photos if p.is_duplicate]
+#     blinks = [p for p in photos if p.status == 'trash' and not p.is_blurry and not p.is_duplicate]
+
+#     # 2. Extract VIP Names (if any)
+#     vip_names = set()
+#     for p in vips:
+#         if p.matched_target_path:
+#             clean_name = os.path.basename(p.matched_target_path).split('_', 2)[-1].split('.')[0]
+#             if clean_name.lower() not in ["image", "photo", "selfie"]:
+#                 vip_names.add(clean_name.capitalize())
+    
+#     vip_string = f"{', '.join(vip_names)}" if vip_names else "None"
+
+#     # 3. Clearly format the data to send to the DO Agent
+#     user_text = f"""Here is the exact data for you to use:
+
+# User Name: {current_user.name}
+# Album Name: {album.title}
+
+# Photo Statistics:
+# - Total uploaded: {total}
+# - Good photos kept: {len(keepers) + len(vips)}
+# - VIP matches found: {len(vips)} (Target names: {vip_string})
+# - Photos deleted due to blur: {len(blurry)}
+# - Photos deleted as exact duplicates: {len(duplicates)}
+# - Photos deleted due to closed eyes/blinking: {len(blinks)}"""
+
+#     # --- THE MAGIC DO AGENT CONNECTION ---
+#     # Notice we added /api/v1/ to the end of your URL as required by DO!
+#     AGENT_URL = "https://l7vvbibqjxfykpevtidx5b4d.agents.do-ai.run/api/v1/"
+#     AGENT_KEY = "6CMFPIpRiQuByWl0qMy-HreERC7rMK8r" 
+
+#     client = OpenAI(
+#         base_url=AGENT_URL,
+#         api_key=AGENT_KEY,
+#     )
+
+#     try:
+#         # 4. Call DigitalOcean Managed Agent
+#         resp = client.chat.completions.create(
+#             model="n/a",  # DO Agents handle the model internally, so we just pass "n/a"
+#             messages=[{"role": "user", "content": user_text}]
+#         )
+#         return {"agent_reply": resp.choices[0].message.content}
+#     except Exception as e:
+#         print(f"DO Agent Error: {e}")
+#         raise HTTPException(status_code=500, detail="Aperture AI is currently unavailable.")
+
+@app.post("/albums/{album_id}/curator-chat")
+def chat_with_curator(album_id: int, db: Session = Depends(database.get_db), current_user: models.User = Depends(get_current_user)):
+    """AI Chaining: Gemini Vision (with Location Context) -> DigitalOcean Agent"""
+    album = db.query(models.Album).filter(models.Album.id == album_id, models.Album.user_id == current_user.id).first()
+    if not album:
+        raise HTTPException(status_code=404, detail="Album not found")
+
+    # 1. Gather Stats
+    photos = db.query(models.Photo).filter(models.Photo.album_id == album_id).all()
+    total = len(photos)
+    vips = [p for p in photos if p.has_target_face]
+    keepers = [p for p in photos if p.status == 'kept' and not p.has_target_face]
+    blurry = [p for p in photos if p.is_blurry]
+    duplicates = [p for p in photos if p.is_duplicate]
+    blinks = [p for p in photos if p.status == 'trash' and not p.is_blurry and not p.is_duplicate]
+
+    # Extract VIP names directly from the filename (e.g. Pranav.jpg -> Pranav)
+    vip_names = set()
+    for p in vips:
+        if p.matched_target_path:
+            clean_name = os.path.basename(p.matched_target_path).split('_', 2)[-1].split('.')[0]
+            if clean_name.lower() not in ["image", "photo", "selfie", "target"]:
+                vip_names.add(clean_name.capitalize())
+    vip_string = f"{', '.join(vip_names)}" if vip_names else "None"
+
+    # --- AI CHAINING PART 1 (GEMINI VISION) ---
+    visual_description = "No outstanding visual data available."
+    best_photo = vips[0] if vips else (keepers[0] if keepers else None)
+    
+    if best_photo and os.path.exists(best_photo.file_path):
+        try:
+            genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+            vision_model = genai.GenerativeModel('gemini-2.5-flash')
+            
+            img = PIL.Image.open(best_photo.file_path)
+            # PASS THE ALBUM TITLE TO GEMINI FOR LOCATION CONTEXT!
+            vision_prompt = f"This photo is from an event/album titled '{album.title}'. Describe the lighting, mood, subjects, and setting of this photo in 2 highly descriptive sentences. Guess the vibe or location based on the album title."
+            
+            vision_resp = vision_model.generate_content([vision_prompt, img])
+            visual_description = vision_resp.text.strip()
+            print(f"Gemini saw: {visual_description}") 
+        except Exception as e:
+            print(f"Gemini Vision failed: {e}")
+
+    # --- AI CHAINING PART 2 (DIGITALOCEAN AGENT) ---
+    user_text = f"""Here is the exact data for you to use:
+
+User Name: {current_user.name}
+Album Name: {album.title}
+
+Photo Statistics:
+- Total uploaded: {total}
+- Good photos kept: {len(keepers) + len(vips)}
+- VIP matches found: {len(vips)} (Target names: {vip_string})
+
+Best Photo Visual Description (Analyzed by our Vision Module):
+"{visual_description}"
+
+TASK INSTRUCTIONS:
+1. Greet the user, mention the album, and give a 1-sentence summary of the stats.
+2. Based entirely on the "Best Photo Visual Description" above, write exactly 6 different Instagram caption options. 
+3. You MUST include emojis and hashtags in every single caption and keep it short. Make them highly attractive and animated."""
+
+    AGENT_URL = os.getenv("AGENT_URL")
+    AGENT_KEY = os.getenv("AGENT_KEY") 
+
+    client = OpenAI(
+        base_url=AGENT_URL,
+        api_key=AGENT_KEY,
+    )
+
+    try:
+        resp = client.chat.completions.create(
+            model="n/a", 
+            messages=[{"role": "user", "content": user_text}],
+            max_completion_tokens=500, # INCREASED TO 800 SO IT DOES NOT CUT OFF!
+        )
+        return {"agent_reply": resp.choices[0].message.content}
+    except Exception as e:
+        print(f"DO Agent Error: {e}")
+        raise HTTPException(status_code=500, detail="Aperture AI is currently unavailable.")
