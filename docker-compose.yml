@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    restart: always
+
+  backend:
+    build: ./photo_backend
+    ports:
+      - "8000:8000"
+    environment:
+      # Tell Celery to use the Docker Redis container
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    env_file:
+      - ./photo_backend/.env
+    depends_on:
+      - redis
+    restart: always
+    volumes:
+      - ./photo_backend/uploads:/app/uploads
+      - ./photo_backend/curator.db:/app/curator.db
+
+  worker:
+    build: ./photo_backend
+    command: celery -A worker.celery_app worker --loglevel=info
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    env_file:
+      - ./photo_backend/.env
+    depends_on:
+      - redis
+      - backend
+    restart: always
+    volumes:
+      - ./photo_backend/uploads:/app/uploads
+      - ./photo_backend/curator.db:/app/curator.db
+
+  frontend:
+    build: ./photo_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: always
