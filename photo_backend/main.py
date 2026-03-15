@@ -27,11 +27,11 @@ import database
 from worker import process_album_task
 
 # --- NEW: LOAD ENV VARIABLES ---
-load_dotenv() 
+load_dotenv()
 
 # --- UPDATED SECURITY CONSTANTS ---
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
-JWT_SECRET = os.getenv("JWT_SECRET") 
+JWT_SECRET = os.getenv("JWT_SECRET")
 DO_MODEL_ACCESS_KEY = os.getenv("DO_MODEL_ACCESS_KEY")
 ALGORITHM = "HS256"
 
@@ -45,7 +45,7 @@ app = FastAPI(title="Smart Photo Curator API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"], 
+    allow_origin_regex=".*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -65,8 +65,8 @@ def auth_google(request: TokenRequest, db: Session = Depends(database.get_db)):
     try:
         # Verify the token securely with Google's servers
         idinfo = id_token.verify_oauth2_token(
-        request.token, 
-        google_requests.Request(), 
+        request.token,
+        google_requests.Request(),
         GOOGLE_CLIENT_ID,
         clock_skew_in_seconds=10  # <--- Adds a 10-second grace period for slow clocks!
     )
@@ -85,7 +85,7 @@ def auth_google(request: TokenRequest, db: Session = Depends(database.get_db)):
         # Issue custom JWT for session
         encoded_jwt = jwt.encode({"sub": user.email, "id": user.id}, JWT_SECRET, algorithm=ALGORITHM)
         return {"access_token": encoded_jwt, "user": {"name": user.name, "picture": user.picture, "email": user.email}}
-        
+
     except ValueError as e:
         print(f"🚨 Google Auth Error: {e}") # <--- This will print the exact reason to your terminal!
         raise HTTPException(status_code=401, detail="Invalid Google Token")
@@ -99,7 +99,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
             raise HTTPException(status_code=401, detail="Invalid token payload")
     except jwt.PyJWTError:
         raise HTTPException(status_code=401, detail="Session expired or invalid")
-        
+
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if user is None:
         raise HTTPException(status_code=401, detail="User not found")
@@ -109,7 +109,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 # --- PROTECTED APP ROUTES ---
 @app.post("/albums/")
 def create_album(
-    title: str = Form(...), 
+    title: str = Form(...),
     target_faces: Optional[List[UploadFile]] = File(None),
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(get_current_user) # Locks endpoint
@@ -118,7 +118,7 @@ def create_album(
     db.add(new_album)
     db.commit()
     db.refresh(new_album)
-    
+
     saved_target_paths = []
     if target_faces and len(target_faces) > 0 and target_faces[0].filename != "":
         album_dir = os.path.join(UPLOAD_DIR, str(new_album.id))
@@ -129,7 +129,7 @@ def create_album(
                 with open(file_path, "wb") as buffer:
                     shutil.copyfileobj(face_file.file, buffer)
                 saved_target_paths.append(file_path)
-                
+
         if saved_target_paths:
             new_album.target_face_paths = ",".join(saved_target_paths)
             db.commit()
@@ -138,8 +138,8 @@ def create_album(
 
 @app.post("/albums/{album_id}/upload-photos/")
 def upload_photos(
-    album_id: int, 
-    files: List[UploadFile] = File(...), 
+    album_id: int,
+    files: List[UploadFile] = File(...),
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(get_current_user)
 ):
@@ -147,20 +147,20 @@ def upload_photos(
     album = db.query(models.Album).filter(models.Album.id == album_id, models.Album.user_id == current_user.id).first()
     if not album:
         raise HTTPException(status_code=404, detail="Album not found")
-        
+
     album_dir = os.path.join(UPLOAD_DIR, str(album_id))
     os.makedirs(album_dir, exist_ok=True)
-    
+
     saved_photos = []
     for file in files:
         file_path = os.path.join(album_dir, file.filename)
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
-            
+
         new_photo = models.Photo(album_id=album_id, filename=file.filename, file_path=file_path)
         db.add(new_photo)
         saved_photos.append(file.filename)
-        
+
     db.commit()
     process_album_task.delay(album_id)
     return {"message": "Success", "album_id": album_id}
@@ -176,15 +176,15 @@ def get_album_results(album_id: int, db: Session = Depends(database.get_db), cur
     album = db.query(models.Album).filter(models.Album.id == album_id, models.Album.user_id == current_user.id).first()
     if not album:
         raise HTTPException(status_code=404, detail="Album not found")
-        
+
     photos = db.query(models.Photo).filter(models.Photo.album_id == album_id).all()
     return {
         "album_id": album.id, "title": album.title, "processing_status": album.status, "total_photos": len(photos),
         "results": [
             {
-                "photo_id": p.id, "filename": p.filename, "decision": p.status, 
+                "photo_id": p.id, "filename": p.filename, "decision": p.status,
                 "is_blurry": p.is_blurry, "sharpness_score": p.sharpness_score, "is_duplicate": p.is_duplicate,
-                "has_target_face": p.has_target_face, "matched_target_path": getattr(p, "matched_target_path", None) 
+                "has_target_face": p.has_target_face, "matched_target_path": getattr(p, "matched_target_path", None)
             } for p in photos
         ]
     }
@@ -199,7 +199,7 @@ def update_photo_status(photo_id: int, update: PhotoUpdate, db: Session = Depend
     photo = db.query(models.Photo).join(models.Album).filter(models.Photo.id == photo_id, models.Album.user_id == current_user.id).first()
     if not photo:
         raise HTTPException(status_code=404, detail="Photo not found")
-    
+
     photo.status = update.decision
     photo.is_blurry = update.is_blurry
     photo.is_duplicate = update.is_duplicate
@@ -232,28 +232,28 @@ def download_album_local(album_id: int, db: Session = Depends(database.get_db), 
 
     # Only grab the good photos!
     photos = db.query(models.Photo).filter(models.Photo.album_id == album_id, models.Photo.status == 'kept').all()
-    
+
     # Create an in-memory zip file
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
         for photo in photos:
             if not os.path.exists(photo.file_path):
                 continue
-                
+
             # Organize into subfolders inside the ZIP
             if photo.has_target_face:
                 folder_name = "VIP Matches"
             else:
                 folder_name = "General Keepers"
-                
+
             # Naming format: AlbumTitle/Category/Filename
             zip_path = f"Curated_{album.title}/{folder_name}/{photo.filename}"
             zip_file.write(photo.file_path, arcname=zip_path)
 
     zip_buffer.seek(0)
     return StreamingResponse(
-        zip_buffer, 
-        media_type="application/zip", 
+        zip_buffer,
+        media_type="application/zip",
         headers={"Content-Disposition": f"attachment; filename=Curated_{album.title.replace(' ', '_')}.zip"}
     )
 
@@ -286,7 +286,7 @@ def export_to_drive(album_id: int, req: DriveExportRequest, db: Session = Depend
         # 2. Create VIP and Keepers Subfolders
         vip_meta = {'name': 'VIP Matches', 'parents': [main_folder_id], 'mimeType': 'application/vnd.google-apps.folder'}
         kept_meta = {'name': 'General Keepers', 'parents': [main_folder_id], 'mimeType': 'application/vnd.google-apps.folder'}
-        
+
         vip_folder_id = service.files().create(body=vip_meta, fields='id').execute().get('id')
         kept_folder_id = service.files().create(body=kept_meta, fields='id').execute().get('id')
 
@@ -294,12 +294,12 @@ def export_to_drive(album_id: int, req: DriveExportRequest, db: Session = Depend
         for photo in photos:
             if not os.path.exists(photo.file_path):
                 continue
-            
+
             parent_id = vip_folder_id if photo.has_target_face else kept_folder_id
-            
+
             file_metadata = {'name': photo.filename, 'parents': [parent_id]}
             media = MediaFileUpload(photo.file_path, mimetype='image/jpeg', resumable=True)
-            
+
             service.files().create(body=file_metadata, media_body=media, fields='id').execute()
 
         return {"message": "Successfully exported to Google Drive!"}
@@ -336,7 +336,7 @@ def encode_image(image_path):
 #             clean_name = os.path.basename(p.matched_target_path).split('_', 2)[-1].split('.')[0]
 #             if clean_name.lower() not in ["image", "photo", "selfie"]:
 #                 vip_names.add(clean_name.capitalize())
-    
+
 #     vip_string = f"{', '.join(vip_names)}" if vip_names else "None"
 
 #     # 3. Clearly format the data to send to the DO Agent
@@ -356,7 +356,7 @@ def encode_image(image_path):
 #     # --- THE MAGIC DO AGENT CONNECTION ---
 #     # Notice we added /api/v1/ to the end of your URL as required by DO!
 #     AGENT_URL = "https://l7vvbibqjxfykpevtidx5b4d.agents.do-ai.run/api/v1/"
-#     AGENT_KEY = "6CMFPIpRiQuByWl0qMy-HreERC7rMK8r" 
+#     AGENT_KEY = "6CMFPIpRiQuByWl0qMy-HreERC7rMK8r"
 
 #     client = OpenAI(
 #         base_url=AGENT_URL,
@@ -402,19 +402,19 @@ def chat_with_curator(album_id: int, db: Session = Depends(database.get_db), cur
     # --- AI CHAINING PART 1 (GEMINI VISION) ---
     visual_description = "No outstanding visual data available."
     best_photo = vips[0] if vips else (keepers[0] if keepers else None)
-    
+
     if best_photo and os.path.exists(best_photo.file_path):
         try:
             genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
             vision_model = genai.GenerativeModel('gemini-2.5-flash')
-            
+
             img = PIL.Image.open(best_photo.file_path)
             # PASS THE ALBUM TITLE TO GEMINI FOR LOCATION CONTEXT!
             vision_prompt = f"This photo is from an event/album titled '{album.title}'. Describe the lighting, mood, subjects, and setting of this photo in 2 highly descriptive sentences. Guess the vibe or location based on the album title."
-            
+
             vision_resp = vision_model.generate_content([vision_prompt, img])
             visual_description = vision_resp.text.strip()
-            print(f"Gemini saw: {visual_description}") 
+            print(f"Gemini saw: {visual_description}")
         except Exception as e:
             print(f"Gemini Vision failed: {e}")
 
@@ -434,11 +434,11 @@ Best Photo Visual Description (Analyzed by our Vision Module):
 
 TASK INSTRUCTIONS:
 1. Greet the user, mention the album, and give a 1-sentence summary of the stats.
-2. Based entirely on the "Best Photo Visual Description" above, write exactly 6 different Instagram caption options. 
+2. Based entirely on the "Best Photo Visual Description" above, write exactly 6 different Instagram caption options.
 3. You MUST include emojis and hashtags in every single caption and keep it short. Make them highly attractive and animated."""
 
     AGENT_URL = os.getenv("AGENT_URL")
-    AGENT_KEY = os.getenv("AGENT_KEY") 
+    AGENT_KEY = os.getenv("AGENT_KEY")
 
     client = OpenAI(
         base_url=AGENT_URL,
@@ -447,7 +447,7 @@ TASK INSTRUCTIONS:
 
     try:
         resp = client.chat.completions.create(
-            model="n/a", 
+            model="n/a",
             messages=[{"role": "user", "content": user_text}],
             max_completion_tokens=500, # INCREASED TO 800 SO IT DOES NOT CUT OFF!
         )

@@ -6,13 +6,15 @@ services:
     ports:
       - "6379:6379"
     restart: always
+    # Redis is lightweight, cap it so it doesn't silently eat RAM
+    mem_limit: 256m
+    memswap_limit: 256m
 
   backend:
     build: ./photo_backend
     ports:
       - "8000:8000"
     environment:
-      # Tell Celery to use the Docker Redis container
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
     env_file:
@@ -20,13 +22,21 @@ services:
     depends_on:
       - redis
     restart: always
+    # Backend (FastAPI) does not run ML inference, 1GB is plenty
+    mem_limit: 1g
+    memswap_limit: 1g
     volumes:
       - ./photo_backend/uploads:/app/uploads
       - ./photo_backend/curator.db:/app/curator.db
 
   worker:
     build: ./photo_backend
-    command: celery -A worker.celery_app worker --loglevel=info
+    # FIXED:
+    #   --concurrency=1   → Only 1 fork. Previously 2 forks × (TF + MediaPipe) ≈ 6-7GB spike
+    #   --max-tasks-per-child=1 → Worker subprocess fully restarts after every album.
+    #                             This releases ALL memory (TF, MediaPipe, DeepFace weights)
+    #                             between jobs so RAM never accumulates across tasks.
+    command: celery -A worker.celery_app worker --loglevel=info --concurrency=1 --max-tasks-per-child=1
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
@@ -36,6 +46,10 @@ services:
       - redis
       - backend
     restart: always
+    # Give the worker the lion's share of RAM for TF + MediaPipe + DeepFace
+    # Hard cap at 6GB — if it exceeds this it's a runaway process, not a normal task
+    mem_limit: 6g
+    memswap_limit: 6g
     volumes:
       - ./photo_backend/uploads:/app/uploads
       - ./photo_backend/curator.db:/app/curator.db
@@ -47,3 +61,5 @@ services:
     depends_on:
       - backend
     restart: always
+    mem_limit: 128m
+    memswap_limit: 128m

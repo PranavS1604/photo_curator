@@ -1,12 +1,16 @@
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
+from dotenv import load_dotenv
 
-# Using SQLite for local development. We will swap this to PostgreSQL later.
-SQLALCHEMY_DATABASE_URL = "sqlite:///./photo_curator.db"
+load_dotenv()
 
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
-)
+# We pull the secure DigitalOcean database string from your .env
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
+
+# PostgreSQL doesn't need the check_same_thread hack that SQLite needs!
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
