@@ -223,6 +223,10 @@ function App() {
   const [activeTab, setActiveTab] = useState('vips');
   const [lightboxIndex, setLightboxIndex] = useState(null);
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState(null);
+  const [isSearching, setIsSearching] = useState(false);
+
   const [targetDropActive, setTargetDropActive] = useState(false);
   const [photoDropActive, setPhotoDropActive] = useState(false);
 
@@ -309,6 +313,26 @@ function App() {
         fetchHistory(); 
       }
     } catch (e) { console.error(e); }
+  };
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim() || !albumId) return;
+    
+    setIsSearching(true);
+    try {
+      // Use port 8001 for staging backend, or dynamically determine based on environment
+      const backendPort = window.location.port === '5173' ? '8001' : window.location.port;
+      const searchUrl = `${window.location.protocol}//${window.location.hostname}:${backendPort}/albums/${albumId}/search?q=${encodeURIComponent(searchQuery)}`;
+      
+      const res = await axios.get(searchUrl);
+      setSearchResults(res.data?.results || []);
+      setActiveTab('search');
+    } catch (e) {
+      console.error('Search error:', e);
+      alert('Search failed. Make sure you are connecting to the staging backend on port 8001.');
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   // --- NEW: Handle custom naming for VIP Targets ---
@@ -480,6 +504,7 @@ function App() {
       case 'duplicates': return duplicates;
       case 'blurry': return blurryPhotos;
       case 'bad': return blinkPhotos;
+      case 'search': return searchResults || [];
       default: return [];
     }
   };
@@ -716,30 +741,62 @@ function App() {
                     <button className={`tab-btn ${activeTab === 'duplicates' ? 'active' : ''}`} onClick={() => setActiveTab('duplicates')}>Duplicates <span className="tab-count">{duplicates.length}</span></button>
                     <button className={`tab-btn ${activeTab === 'blurry' ? 'active' : ''}`} onClick={() => setActiveTab('blurry')}>Blurry <span className="tab-count">{blurryPhotos.length}</span></button>
                     <button className={`tab-btn ${activeTab === 'bad' ? 'active' : ''}`} onClick={() => setActiveTab('bad')}>Blinks & Bad <span className="tab-count">{blinkPhotos.length}</span></button>
+                    <button className={`tab-btn ${activeTab === 'search' ? 'active' : ''}`} onClick={() => { setActiveTab('search'); setSearchResults(null); }}>🔍 AI Search</button>
                   </div>
 
+                  {activeTab === 'search' && (
+                    <div style={{padding: '1.5rem', display: 'flex', gap: '1rem', marginBottom: '1.5rem', backgroundColor: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--gold-border)'}}>
+                      <input 
+                        type="text" 
+                        value={searchQuery} 
+                        onChange={(e) => setSearchQuery(e.target.value)} 
+                        onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                        placeholder="Ask AI to search (e.g., 'laughing at night', 'sunset with group')"
+                        style={{flex: 1, padding: '0.8rem 1rem', borderRadius: '8px', border: '1px solid var(--gold-dim)', backgroundColor: 'var(--bg-dark)', color: 'var(--text-main)', fontSize: '0.95rem'}}
+                      />
+                      <button 
+                        onClick={handleSearch} 
+                        disabled={isSearching || !searchQuery.trim()}
+                        style={{padding: '0.8rem 1.5rem', backgroundColor: isSearching ? 'var(--text-muted)' : 'var(--gold-primary)', color: 'var(--bg-dark)', border: 'none', borderRadius: '8px', cursor: isSearching ? 'not-allowed' : 'pointer', fontWeight: 'bold', transition: 'all 0.3s'}}
+                      >
+                        {isSearching ? '⏳ Searching...' : '🔍 Search'}
+                      </button>
+                    </div>
+                  )}
+
                   {activePhotos.length === 0 ? (
-                    <div style={{padding: '3rem', textAlign: 'center', color: 'var(--text-muted)'}}>No photos in this category.</div>
+                    <div style={{padding: '3rem', textAlign: 'center', color: 'var(--text-muted)'}}>
+                      {activeTab === 'search' ? 'No photos found matching your search.' : 'No photos in this category.'}
+                    </div>
                   ) : (
                     <div className="photo-grid">
                       {activePhotos.map((photo, idx) => {
                         if(!photo) return null;
+                        const isSearchResult = photo.file_path && !photo.decision;
                         const cleanName = photo.matched_target_path ? photo.matched_target_path.replace(/^target_\d+_/, '').split('.')[0] : 'MATCH';
+                        const imgSrc = isSearchResult 
+                          ? `${API_BASE}/${photo.file_path}` 
+                          : `${API_BASE}/uploads/${albumId}/${photo.filename}`;
+                        const title = isSearchResult ? photo.filename : photo.filename;
+                        
                         return (
-                          <div className={`photo-card ${photo.decision === 'trash' ? 'dimmed' : ''}`} key={photo.photo_id} onClick={() => openLightbox(idx)}>
-                            <img className="main-img" src={`${API_BASE}/uploads/${albumId}/${photo.filename}`} alt={photo.filename} loading="lazy" />
+                          <div className={`photo-card ${photo.decision === 'trash' ? 'dimmed' : ''}`} key={photo.id || photo.photo_id} onClick={() => openLightbox(idx)}>
+                            <img className="main-img" src={imgSrc} alt={title} loading="lazy" />
                             <div className="card-info">
-                              <span className="photo-filename">{photo.filename}</span>
-                              {activeTab === 'vips' && (
+                              <span className="photo-filename">{title}</span>
+                              {isSearchResult && photo.ai_description && (
+                                <span className="badge kept" style={{fontSize: '0.8rem'}}>{photo.ai_description.substring(0, 50)}...</span>
+                              )}
+                              {!isSearchResult && activeTab === 'vips' && (
                                 <span className="badge vip">
                                   {photo.matched_target_path && <img className="avatar" src={`${API_BASE}/uploads/${albumId}/${photo.matched_target_path}`} alt="VIP" onError={(e) => { e.target.style.display = 'none'; }}/>}
                                   🎯 {cleanName.replace(/_/g, ' ')}
                                 </span>
                               )}
-                              {activeTab === 'kept' && <span className="badge kept">✨ QUALITY SHOT</span>}
-                              {activeTab === 'duplicates' && <span className="badge dup">👯 DUPLICATE</span>}
-                              {activeTab === 'blurry' && <span className="badge blur">💧 BLURRY ({Math.round(photo.sharpness_score || 0)})</span>}
-                              {activeTab === 'bad' && <span className="badge bad">👁️ BAD ANGLE/BLINK</span>}
+                              {!isSearchResult && activeTab === 'kept' && <span className="badge kept">✨ QUALITY SHOT</span>}
+                              {!isSearchResult && activeTab === 'duplicates' && <span className="badge dup">👯 DUPLICATE</span>}
+                              {!isSearchResult && activeTab === 'blurry' && <span className="badge blur">💧 BLURRY ({Math.round(photo.sharpness_score || 0)})</span>}
+                              {!isSearchResult && activeTab === 'bad' && <span className="badge bad">👁️ BAD ANGLE/BLINK</span>}
                             </div>
                           </div>
                         )

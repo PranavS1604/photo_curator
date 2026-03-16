@@ -3,12 +3,51 @@ import database, models
 import os
 from sqlalchemy.orm import Session
 from analyzer import check_blur, get_image_hash, analyze_faces_dynamic, check_for_target_faces
+import google.generativeai as genai
+from openai import OpenAI
+from PIL import Image
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# Configure Gemini
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+
+# Configure DigitalOcean Gradient AI client
+gradient_client = OpenAI(
+    base_url="https://inference.do-ai.run/v1/",
+    api_key=os.getenv("DO_MODEL_ACCESS_KEY"),
+)
 
 celery_app = Celery(
     "photo_tasks",
     broker="redis://localhost:6379/0",
     backend="redis://localhost:6379/0"
 )
+
+def get_ai_embeddings(image_path):
+    """Generate AI description and embedding using Gemini + DigitalOcean Gradient AI."""
+    try:
+        # 1. Ask Gemini to describe the image
+        vision_model = genai.GenerativeModel('gemini-2.5-flash')
+        img = Image.open(image_path)
+        response = vision_model.generate_content([
+            "Describe this image simply in 1-2 sentences: time of day, setting, emotions, and main subjects.", img
+        ])
+        description = response.text
+
+        # 2. Ask DigitalOcean to convert description to embedding
+        do_response = gradient_client.embeddings.create(
+            model="bge-m3",
+            input=description
+        )
+        embedding = do_response.data[0].embedding
+        
+        return description, embedding
+    except Exception as e:
+        print(f"❌ Embedding failed for {image_path}: {e}")
+        return None, None
 
 @celery_app.task
 def process_album_task(album_id: int):
@@ -116,6 +155,16 @@ def process_album_task(album_id: int):
                     db_photo.has_target_face = False
                     db_photo.matched_target_path = None
                     print(f"✅ Kept -> {db_photo.filename}")
+                
+                # Generate AI description and embedding for semantic search
+                try:
+                    desc, embed = get_ai_embeddings(db_photo.file_path)
+                    if desc and embed:
+                        db_photo.ai_description = desc
+                        db_photo.embedding = embed
+                        print(f"🧠 Embedding generated for {db_photo.filename}")
+                except Exception as e:
+                    print(f"⚠️  Embedding generation failed for {db_photo.filename}: {e}")
 
         # Save to database to trigger the live React progress bar
         db.commit()

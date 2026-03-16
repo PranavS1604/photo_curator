@@ -3,8 +3,9 @@ version: '3.8'
 services:
   redis:
     image: redis:alpine
+    container_name: photo_curator_redis_test
     ports:
-      - "6379:6379"
+      - "6380:6379"
     restart: always
     # Redis is lightweight, cap it so it doesn't silently eat RAM
     mem_limit: 256m
@@ -12,8 +13,9 @@ services:
 
   backend:
     build: ./photo_backend
+    container_name: photo_curator_backend_test
     ports:
-      - "8000:8000"
+      - "8001:8000"
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
@@ -31,6 +33,7 @@ services:
 
   worker:
     build: ./photo_backend
+    container_name: photo_curator_worker_test
     # FIXED:
     #   --concurrency=1   → Only 1 fork. Previously 2 forks × (TF + MediaPipe) ≈ 6-7GB spike
     #   --max-tasks-per-child=1 → Worker subprocess fully restarts after every album.

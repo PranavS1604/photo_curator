@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, Boolean, Float, ForeignKey
 from sqlalchemy.orm import relationship
 from database import Base
+from pgvector.sqlalchemy import Vector
 
 # --- NEW: User Table ---
 class User(Base):
@@ -38,6 +39,11 @@ class Photo(Base):
     sharpness_score = Column(Float, nullable=True)
     is_duplicate = Column(Boolean, nullable=True)
     has_target_face = Column(Boolean, nullable=True)
-    matched_target_path = Column(String, nullable=True) 
+    matched_target_path = Column(String, nullable=True)
+    
+    # AI & Semantic Search Columns
+    ai_description = Column(String, nullable=True)
+    # 1024 is the exact dimension size for DigitalOcean's 'bge-m3' embedding model
+    embedding = Column(Vector(1024), nullable=True) 
     
     album = relationship("Album", back_populates="photos")

@@ -35,6 +35,12 @@ JWT_SECRET = os.getenv("JWT_SECRET")
 DO_MODEL_ACCESS_KEY = os.getenv("DO_MODEL_ACCESS_KEY")
 ALGORITHM = "HS256"
 
+# Initialize the DigitalOcean Gradient AI Client for embeddings
+gradient_client = OpenAI(
+    base_url="https://inference.do-ai.run/v1/",
+    api_key=DO_MODEL_ACCESS_KEY,
+)
+
 if not GOOGLE_CLIENT_ID or not JWT_SECRET:
     raise ValueError("Missing essential environment variables. Please check your .env file.")
 
@@ -373,6 +379,54 @@ def encode_image(image_path):
 #     except Exception as e:
 #         print(f"DO Agent Error: {e}")
 #         raise HTTPException(status_code=500, detail="Aperture AI is currently unavailable.")
+
+# --- SEMANTIC SEARCH ENDPOINT (DigitalOcean Gradient AI + pgvector) ---
+
+@app.get("/albums/{album_id}/search")
+def search_photos(album_id: int, q: str, db: Session = Depends(database.get_db), current_user: models.User = Depends(get_current_user)):
+    """Search photos by semantic meaning using DO Gradient AI embeddings."""
+    try:
+        # Verify album ownership
+        album = db.query(models.Album).filter(
+            models.Album.id == album_id, 
+            models.Album.user_id == current_user.id
+        ).first()
+        if not album:
+            raise HTTPException(status_code=404, detail="Album not found")
+        
+        # 1. Turn user search into a vector using DO Gradient AI
+        response = gradient_client.embeddings.create(
+            model="bge-m3",  # DO's native embedding model
+            input=q
+        )
+        query_embedding = response.data[0].embedding
+
+        # 2. Search Postgres using pgvector cosine distance
+        results = db.query(models.Photo).filter(
+            models.Photo.album_id == album_id,
+            models.Photo.status == "kept",
+            models.Photo.embedding.isnot(None)
+        ).order_by(
+            models.Photo.embedding.cosine_distance(query_embedding)
+        ).limit(10).all()
+        
+        return {
+            "query": q,
+            "results": [
+                {
+                    "id": photo.id,
+                    "filename": photo.filename,
+                    "file_path": photo.file_path,
+                    "ai_description": photo.ai_description,
+                    "status": photo.status,
+                    "has_target_face": photo.has_target_face
+                }
+                for photo in results
+            ]
+        }
+    except Exception as e:
+        print(f"Search Error: {e}")
+        raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
 
 @app.post("/albums/{album_id}/curator-chat")
 def chat_with_curator(album_id: int, db: Session = Depends(database.get_db), current_user: models.User = Depends(get_current_user)):
