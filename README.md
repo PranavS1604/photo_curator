@@ -4,7 +4,10 @@ An enterprise-grade, AI-powered SaaS application designed to automate the grueli
 
 Upload massive, messy folders of raw event photos, and our cloud-based pipeline will automatically detect blinks, remove exact duplicates, and isolate specific VIPs using localized telemetry. Once curated, the true magic begins: **Aperture AI**, a fully-managed DigitalOcean Agent, uses Semantic Vector Search to act as your personal conversational archivist and social media copywriter.
 
-![Smart Photo Curator](https://raw.githubusercontent.com/digitalocean/sample-images/main/placeholder.png) *(Replace with a screenshot of your beautiful sliding UI!)*
+![Sliding UI Dashboard](sample-images/dashboard.png)
+![Features](sample-images/features.png)
+![Aperture AI Chat](sample-images/aperture-ai.png)
+![Caption-generation](sample-images/captions.png)
 
 ### 🔗 Quick Links
 * **[Watch the 3-Minute Demo Video](https://youtube.com...)**
@@ -23,6 +26,90 @@ We moved beyond basic API wrappers to build a **Multi-Agent Orchestration Pipeli
 4. **DigitalOcean Droplets (Compute & Hosting):**
    The entire containerized architecture, including the heavy local computer vision workers and the Nginx React frontend, is hosted securely on a DigitalOcean Droplet.
 
+---
+
+## 🏗️ Architectural Design
+
+```mermaid
+flowchart LR
+  %% --- DIGITALOCEAN & BRAND COLOR PALETTE ---
+  %% Official DO Blue: #0069ff, DO Navy: #031b4e
+  classDef doGradient fill:#0069ff,stroke:#00f0ff,stroke-width:3px,color:#ffffff,rx:12px
+  classDef doDroplet fill:#031b4e,stroke:#0069ff,stroke-width:2px,color:#ffffff,rx:8px
+  classDef doDB fill:#059669,stroke:#34d399,stroke-width:2px,color:#ffffff,rx:8px
+  classDef google fill:#1e293b,stroke:#ea4335,stroke-width:2px,color:#ffffff,rx:8px
+  classDef aiTask fill:#312e81,stroke:#8b5cf6,stroke-width:2px,color:#ffffff,rx:8px
+  classDef reactUI fill:#0f172a,stroke:#22d3ee,stroke-width:2px,color:#22d3ee,rx:8px
+  classDef cluster fill:none,stroke:#475569,stroke-width:2px,stroke-dasharray: 4 4,rx:10px
+
+  %% --- SYSTEM NODES ---
+  User(("👤 User"))
+  UI["⚛️ React SPA<br/>(Cinematic Sliding UI)"]:::reactUI
+
+  subgraph GoogleCloud ["🌐 Google Cloud API"]
+    OAuth["🔐 Google Auth"]:::google
+    Drive["☁️ Drive Export"]:::google
+    GeminiVision["Gemini 2.5 Flash<br/>(Vision Extraction)"]:::google
+    GeminiEmbed["Gemini Embeddings<br/>(768d Vectors)"]:::google
+  end
+
+  subgraph GradientAI ["🌊 DigitalOcean Gradient™ AI Platform"]
+    DO_Agent["Gradient™ AI Agent<br/>(Aperture RAG Persona)"]:::doGradient
+    DO_Inference["Gradient™ Serverless<br/>(Caption Generator)"]:::doGradient
+  end
+
+  subgraph Backend ["⚡ Backend Layer (DO Droplet)"]
+    API["FastAPI Server<br/>(Docker Container)"]:::doDroplet
+  end
+
+  subgraph DataLayer ["🗄️ DO Managed Data Layer"]
+    Broker[("Redis<br/>(Message Broker)")]:::doDroplet
+    DB[("🐘 DO Managed PostgreSQL<br/>(+ pgvector Extension)")]:::doDB
+    Disk[("Droplet Volume<br/>(Raw Images)")]:::doDroplet
+  end
+
+  subgraph AIEngine ["🧠 Async AI Pipeline (DO Droplet)"]
+    Celery["Celery Worker<br/>(Self-Recycling)"]:::doDroplet
+    Telemetry["Local Telemetry<br/>(OpenCV, pHash, SFace)"]:::aiTask
+    Batcher["📦 JSON Batch Multiplexer<br/>(15 Photos / Request)"]:::aiTask
+  end
+
+  %% --- WORKFLOW ROUTING ---
+  
+  %% 1. Upload Flow
+  User -->|"Interacts"| UI
+  UI -.->|"1. Authenticate"| OAuth
+  UI ==>|"2. Multipart Upload"| API
+  API ==>|"3. Write Files"| Disk
+  API ==>|"4. Push Task"| Broker
+  
+  %% 2. Async Culling Flow (Local)
+  Broker ==>|"5. Consume"| Celery
+  Celery <-->|"6. Blur/Blink/VIP Culling"| Telemetry
+  Celery ==>|"7. Send Keepers"| Batcher
+
+  %% 3. Batch Vision & Vectorization
+  Batcher <-->|"8. Describe Batch"| GeminiVision
+  Batcher <-->|"9. Convert to 768d Math"| GeminiEmbed
+  Batcher --->|"10. Store Metadata & Vectors"| DB
+
+  %% 4. Agentic RAG & Copywriting (The Gradient Magic)
+  UI ==>|"11. Ask Aperture Chat"| API
+  API <-->|"12. Embed User Query"| GeminiEmbed
+  API <-->|"13. Cosine Distance Search"| DB
+  API <-->|"14. Inject RAG Context"| DO_Agent
+  DO_Agent -.->|"15. Stream Chat Reply"| UI
+  
+  API <-->|"16. Generate Social Copy"| DO_Inference
+  DO_Inference -.->|"17. Return Captions"| UI
+
+  %% 5. Export
+  UI ==>|"18. Trigger Export"| API
+  API ==>|"19. Secure Upload"| Drive
+
+  %% Apply cluster styling
+  class GoogleCloud,Backend,DataLayer,AIEngine,GradientAI cluster
+```
 ---
 
 ## 🚀 Core Features
@@ -118,83 +205,3 @@ Access the application in your browser at `http://DROPLET-IP:8080/` (or your Dro
 ---
 
 
-```mermaid
-flowchart LR
-  %% --- DIGITALOCEAN & BRAND COLOR PALETTE ---
-  %% Official DO Blue: #0069ff, DO Navy: #031b4e
-  classDef doGradient fill:#0069ff,stroke:#00f0ff,stroke-width:3px,color:#ffffff,rx:12px
-  classDef doDroplet fill:#031b4e,stroke:#0069ff,stroke-width:2px,color:#ffffff,rx:8px
-  classDef doDB fill:#059669,stroke:#34d399,stroke-width:2px,color:#ffffff,rx:8px
-  classDef google fill:#1e293b,stroke:#ea4335,stroke-width:2px,color:#ffffff,rx:8px
-  classDef aiTask fill:#312e81,stroke:#8b5cf6,stroke-width:2px,color:#ffffff,rx:8px
-  classDef reactUI fill:#0f172a,stroke:#22d3ee,stroke-width:2px,color:#22d3ee,rx:8px
-  classDef cluster fill:none,stroke:#475569,stroke-width:2px,stroke-dasharray: 4 4,rx:10px
-
-  %% --- SYSTEM NODES ---
-  User(("👤 User"))
-  UI["⚛️ React SPA<br/>(Cinematic Sliding UI)"]:::reactUI
-
-  subgraph GoogleCloud ["🌐 Google Cloud API"]
-    OAuth["🔐 Google Auth"]:::google
-    Drive["☁️ Drive Export"]:::google
-    GeminiVision["Gemini 2.5 Flash<br/>(Vision Extraction)"]:::google
-    GeminiEmbed["Gemini Embeddings<br/>(768d Vectors)"]:::google
-  end
-
-  subgraph GradientAI ["🌊 DigitalOcean Gradient™ AI Platform"]
-    DO_Agent["Gradient™ AI Agent<br/>(Aperture RAG Persona)"]:::doGradient
-    DO_Inference["Gradient™ Serverless<br/>(Caption Generator)"]:::doGradient
-  end
-
-  subgraph Backend ["⚡ Backend Layer (DO Droplet)"]
-    API["FastAPI Server<br/>(Docker Container)"]:::doDroplet
-  end
-
-  subgraph DataLayer ["🗄️ DO Managed Data Layer"]
-    Broker[("Redis<br/>(Message Broker)")]:::doDroplet
-    DB[("🐘 DO Managed PostgreSQL<br/>(+ pgvector Extension)")]:::doDB
-    Disk[("Droplet Volume<br/>(Raw Images)")]:::doDroplet
-  end
-
-  subgraph AIEngine ["🧠 Async AI Pipeline (DO Droplet)"]
-    Celery["Celery Worker<br/>(Self-Recycling)"]:::doDroplet
-    Telemetry["Local Telemetry<br/>(OpenCV, pHash, SFace)"]:::aiTask
-    Batcher["📦 JSON Batch Multiplexer<br/>(15 Photos / Request)"]:::aiTask
-  end
-
-  %% --- WORKFLOW ROUTING ---
-  
-  %% 1. Upload Flow
-  User -->|"Interacts"| UI
-  UI -.->|"1. Authenticate"| OAuth
-  UI ==>|"2. Multipart Upload"| API
-  API ==>|"3. Write Files"| Disk
-  API ==>|"4. Push Task"| Broker
-  
-  %% 2. Async Culling Flow (Local)
-  Broker ==>|"5. Consume"| Celery
-  Celery <-->|"6. Blur/Blink/VIP Culling"| Telemetry
-  Celery ==>|"7. Send Keepers"| Batcher
-
-  %% 3. Batch Vision & Vectorization
-  Batcher <-->|"8. Describe Batch"| GeminiVision
-  Batcher <-->|"9. Convert to 768d Math"| GeminiEmbed
-  Batcher --->|"10. Store Metadata & Vectors"| DB
-
-  %% 4. Agentic RAG & Copywriting (The Gradient Magic)
-  UI ==>|"11. Ask Aperture Chat"| API
-  API <-->|"12. Embed User Query"| GeminiEmbed
-  API <-->|"13. Cosine Distance Search"| DB
-  API <-->|"14. Inject RAG Context"| DO_Agent
-  DO_Agent -.->|"15. Stream Chat Reply"| UI
-  
-  API <-->|"16. Generate Social Copy"| DO_Inference
-  DO_Inference -.->|"17. Return Captions"| UI
-
-  %% 5. Export
-  UI ==>|"18. Trigger Export"| API
-  API ==>|"19. Secure Upload"| Drive
-
-  %% Apply cluster styling
-  class GoogleCloud,Backend,DataLayer,AIEngine,GradientAI cluster
-```
