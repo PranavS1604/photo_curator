@@ -655,7 +655,7 @@ function App() {
 
           {currentView === 'gallery' && albumData && (
             <div className="gallery-container">
-              <div className="gallery-header">
+              {/* <div className="gallery-header">
                 <h2 className="view-title" style={{margin: 0}}>{albumData?.title || 'Album'}</h2>
 
                 {albumData?.processing_status === 'completed' && (
@@ -671,6 +671,28 @@ function App() {
                     </button>
                   </div>
                 )}
+              </div> */}
+              <div className="gallery-header">
+                <h2 className="view-title" style={{margin: 0}}>{albumData?.title || 'Album'}</h2>
+
+                <div className="header-actions">
+                  {/* Only show Download & Drive buttons IF completed */}
+                  {albumData?.processing_status === 'completed' && (
+                    <>
+                      <button className="btn-action-head" onClick={handleLocalDownload} disabled={isDownloading}>
+                        {isDownloading ? <span className="spinner-small" /> : '⬇️'} {isDownloading ? 'Zipping...' : 'Download Zip'}
+                      </button>
+                      <button className="btn-action-head btn-drive" onClick={() => triggerGoogleDriveAuth()} disabled={isExportingDrive}>
+                        {isExportingDrive ? <span className="spinner-small" /> : '☁️'} {isExportingDrive ? 'Uploading...' : 'Save to Drive'}
+                      </button>
+                    </>
+                  )}
+                  
+                  {/* ALWAYS show the Delete button so we can kill stuck albums */}
+                  <button className="btn-action-head btn-delete" onClick={handleDeleteAlbum}>
+                    🗑️ Delete
+                  </button>
+                </div>
               </div>
 
               {/* APERTURE AI CHAT BLOCK */}
