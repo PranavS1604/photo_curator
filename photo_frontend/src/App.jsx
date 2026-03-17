@@ -30,29 +30,25 @@ const styles = `
 
   body { background: var(--bg-dark); color: var(--text-main); font-family: 'Inter', sans-serif; min-height: 100vh; overflow-x: hidden; }
 
-  /* ANIMATED BACKGROUND */
   .animated-bg { position: fixed; inset: 0; overflow: hidden; z-index: 0; }
   .animated-bg::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 20% 50%, rgba(212, 175, 55, 0.15) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(157, 78, 221, 0.1) 0%, transparent 50%); animation: gradientShift 15s ease-in-out infinite; }
   .animated-bg::after { content: ''; position: absolute; inset: 0; background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><circle cx="20" cy="20" r="2" fill="rgba(212,175,55,0.3)"/><circle cx="80" cy="80" r="1.5" fill="rgba(157,78,221,0.2)"/><circle cx="50" cy="90" r="1" fill="rgba(212,175,55,0.2)"/></svg>'); animation: float 20s linear infinite; opacity: 0.4; }
   @keyframes gradientShift { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(-20px, -20px); } }
   @keyframes float { 0% { transform: translateX(0) translateY(0); } 100% { transform: translateX(100px) translateY(-100px); } }
 
-  /* LOGIN SCREEN */
   .login-container { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; width: 100vw; background: linear-gradient(135deg, rgba(15, 15, 18, 0.95), rgba(22, 22, 26, 0.95)), radial-gradient(circle at center, rgba(212, 175, 55, 0.08) 0%, var(--bg-dark) 60%); z-index: 1; overflow: hidden; }
   .login-card { position: relative; background: linear-gradient(135deg, var(--bg-card) 0%, #242433 100%); padding: 3.5rem 4rem; border-radius: 20px; border: 1px solid var(--gold-border); box-shadow: 0 20px 60px rgba(0,0,0,0.7), inset 0 1px 0 rgba(212, 175, 55, 0.2); text-align: center; max-width: 480px; width: 90%; animation: slideUp 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); backdrop-filter: blur(10px); }
   .login-title { font-family: 'Cinzel', serif; font-size: 2.8rem; margin-bottom: 0.8rem; font-weight: 700; letter-spacing: 0.02em; background: linear-gradient(135deg, var(--text-main) 0%, var(--gold-primary) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
   .login-title span { color: var(--gold-primary); }
   .login-subtitle { color: var(--text-muted); margin-bottom: 2.5rem; font-size: 1rem; font-weight: 300; letter-spacing: 0.01em; line-height: 1.6; }
   .login-oauth-wrapper { display: flex; justify-content: center; width: 100%; }
-  @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 
-  /* DASHBOARD LAYOUT */
   .dashboard { display: flex; width: 100vw; min-height: 100vh; position: relative; z-index: 2; }
   .sidebar { width: 280px; background: linear-gradient(180deg, var(--bg-panel) 0%, #1a1a20 100%); border-right: 1px solid var(--gold-border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 50; box-shadow: 2px 0 15px rgba(0,0,0,0.5); backdrop-filter: blur(5px); }
   .brand { padding: 2.2rem 1.5rem; border-bottom: 1px solid rgba(212, 175, 55, 0.15); background: linear-gradient(180deg, rgba(212, 175, 55, 0.05) 0%, transparent 100%); }
   .brand-title { font-family: 'Cinzel', serif; font-size: 1.6rem; font-weight: 700; color: var(--text-main); letter-spacing: 0.05em; background: linear-gradient(135deg, var(--gold-primary) 0%, var(--purple-light) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
   .brand-title span { color: var(--gold-primary); }
-  
+
   .user-profile { padding: 1.5rem; display: flex; align-items: center; gap: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(212, 175, 55, 0.03); transition: 0.3s; }
   .user-profile:hover { background: rgba(212, 175, 55, 0.06); }
   .user-avatar { width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--gold-primary); object-fit: cover; box-shadow: 0 0 15px rgba(212, 175, 55, 0.3); }
@@ -90,41 +86,31 @@ const styles = `
   .drop-content { position: relative; z-index: 1; pointer-events: none; }
   .drop-label { color: var(--text-muted); font-size: 1rem; margin: 0.5rem 0; }
   .drop-icon { font-size: 2.5rem; display: block; margin-bottom: 0.8rem; animation: float 3s ease-in-out infinite; }
-  @keyframes floatIcon { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
   .drop-zone.small { padding: 1.8rem; }
   .btn-submit { width: 100%; padding: 1.3rem; background: linear-gradient(135deg, var(--gold-primary), var(--purple-light)); color: var(--bg-dark); border: none; border-radius: 12px; font-size: 1.05rem; font-weight: 700; cursor: pointer; transition: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); margin-top: 1rem; font-family: 'Poppins', sans-serif; letter-spacing: 0.01em; }
   .btn-submit:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 15px 35px rgba(212, 175, 55, 0.4); }
   .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  /* VIP TARGET ITEM STYLES */
   .target-item { display: flex; gap: 1rem; align-items: center; margin-top: 1rem; background: rgba(0,0,0,0.3); padding: 0.8rem; border-radius: 10px; border: 1px solid rgba(212, 175, 55, 0.15); animation: fadeIn 0.3s ease; }
   .target-item img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid var(--gold-primary); }
   .target-item input { flex: 1; padding: 0.6rem 1rem; background: rgba(0,0,0,0.5); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 8px; color: #fff; outline: none; transition: 0.3s; font-family: 'Poppins', sans-serif; }
   .target-item input:focus { border-color: var(--gold-primary); }
   .target-item button { background: rgba(248, 113, 113, 0.1); border: 1px solid rgba(248, 113, 113, 0.3); color: var(--color-bad); border-radius: 8px; width: 36px; height: 36px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; }
-  .target-item button:hover { background: var(--color-bad); color: #000; }
 
-  /* APERTURE AI CHAT STYLES */
   .aperture-container { padding: 2.5rem; background: linear-gradient(135deg, rgba(157, 78, 221, 0.05), rgba(0,0,0,0.6)); border: 1px solid var(--purple-royal); border-radius: 16px; margin-bottom: 2.5rem; box-shadow: 0 10px 40px rgba(157, 78, 221, 0.15); }
   .aperture-title { color: var(--purple-light); margin-bottom: 1.5rem; font-family: 'Cinzel', serif; font-size: 1.6rem; display: flex; align-items: center; gap: 0.8rem; }
   .aperture-line { opacity: 0; animation: fadeInLine 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; line-height: 1.7; color: var(--text-main); margin-bottom: 1rem; font-size: 1.05rem; }
-  .aperture-caption-card { background: rgba(212, 175, 55, 0.05); border-left: 4px solid var(--gold-primary); padding: 1.2rem 1.5rem; margin: 1rem 0; border-radius: 0 12px 12px 0; transition: 0.3s ease; opacity: 0; animation: fadeInLine 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; font-style: italic; color: #fff; font-size: 1.05rem; letter-spacing: 0.01em; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-  .aperture-caption-card:hover { background: rgba(212, 175, 55, 0.12); transform: translateX(8px); border-left-color: var(--purple-light); }
 
   @keyframes fadeInLine { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
   .gallery-container { width: 100%; animation: fadeIn 0.6s ease; }
   .gallery-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(212, 175, 55, 0.2); padding-bottom: 2rem; margin-bottom: 2.5rem; flex-wrap: wrap; gap: 1.5rem; }
-  
-  /* EXPORT BUTTONS STYLING */
+
   .header-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
   .btn-action-head { background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(157, 78, 221, 0.08)); border: 1.5px solid rgba(212, 175, 55, 0.3); color: var(--text-main); padding: 0.8rem 1.4rem; border-radius: 10px; cursor: pointer; transition: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); font-family: 'Poppins', sans-serif; font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 0.6rem; }
   .btn-action-head:hover:not(:disabled) { border-color: var(--gold-primary); background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(157, 78, 221, 0.15)); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(212, 175, 55, 0.25); }
-  .btn-action-head:disabled { opacity: 0.6; cursor: not-allowed; }
   .btn-drive { color: var(--drive-blue); border-color: rgba(66, 133, 244, 0.4); }
-  .btn-drive:hover:not(:disabled) { background: linear-gradient(135deg, rgba(66, 133, 244, 0.15), rgba(66, 133, 244, 0.08)); border-color: var(--drive-blue); }
   .btn-delete { color: var(--color-bad); border-color: rgba(248, 113, 113, 0.4); }
-  .btn-delete:hover:not(:disabled) { background: linear-gradient(135deg, rgba(248, 113, 113, 0.15), rgba(248, 113, 113, 0.08)); border-color: var(--color-bad); }
 
   .progress-container { margin-bottom: 3.5rem; background: linear-gradient(135deg, var(--bg-card) 0%, #242433 100%); border: 1px solid var(--gold-border); border-radius: 16px; padding: 2.5rem; box-shadow: 0 15px 40px rgba(0,0,0,0.5); animation: slideUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
   .progress-header { display: flex; justify-content: space-between; font-size: 1rem; color: var(--text-main); margin-bottom: 1.5rem; font-weight: 600; letter-spacing: 0.01em; }
@@ -149,28 +135,8 @@ const styles = `
   .photo-card img.main-img { width: 100%; height: 260px; object-fit: cover; display: block; transition: 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); background: #000; }
   .photo-card:hover img.main-img { transform: scale(1.08); }
   .photo-card.dimmed img.main-img { filter: grayscale(50%) brightness(0.6); }
-  .photo-card.dimmed:hover img.main-img { filter: grayscale(0%) brightness(1); }
-  
   .card-info { padding: 1.4rem; display: flex; flex-direction: column; gap: 0.9rem; background: linear-gradient(180deg, rgba(0,0,0,0.2), rgba(0,0,0,0.4)); position: relative; z-index: 2; }
   .photo-filename { font-size: 0.85rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-  /* LIGHTBOX */
-  .lightbox-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.97); z-index: 100; display: flex; flex-direction: column; animation: fadeIn 0.3s ease; backdrop-filter: blur(5px); }
-  .lightbox-header { flex-shrink: 0; padding: 2rem 2.5rem; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent); z-index: 10; border-bottom: 1px solid rgba(212, 175, 55, 0.2); }
-  .lightbox-controls { display: flex; gap: 1.2rem; align-items: center; }
-  .btn-icon { background: rgba(212, 175, 55, 0.15); border: 1.5px solid rgba(212, 175, 55, 0.4); color: white; width: 48px; height: 48px; border-radius: 50%; font-size: 1.3rem; cursor: pointer; transition: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); display: flex; align-items: center; justify-content: center; font-weight: 600; }
-  .btn-icon:hover { background: rgba(212, 175, 55, 0.3); border-color: var(--gold-primary); transform: scale(1.12); }
-  .btn-action { display: flex; align-items: center; gap: 0.6rem; padding: 0.8rem 1.5rem; border-radius: 10px; font-family: 'Poppins', sans-serif; font-weight: 700; cursor: pointer; border: 1.5px solid; transition: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); font-size: 0.95rem; letter-spacing: 0.01em; }
-  .btn-keep { background: rgba(52, 211, 153, 0.15); color: var(--color-kept); border-color: rgba(52, 211, 153, 0.5); }
-  .btn-keep:hover { background: var(--color-kept); color: #000; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(52, 211, 153, 0.3); }
-  .btn-trash { background: rgba(248, 113, 113, 0.15); color: var(--color-bad); border-color: rgba(248, 113, 113, 0.5); }
-  .btn-trash:hover { background: var(--color-bad); color: #000; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(248, 113, 113, 0.3); }
-  .lightbox-content { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; padding: 2rem; min-height: 0; overflow: hidden; }
-  .lightbox-img { width: auto; height: auto; max-width: 90%; max-height: 90%; object-fit: contain; border-radius: 12px; box-shadow: 0 0 60px rgba(212, 175, 55, 0.4); user-select: none; animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
-  .nav-area { position: absolute; top: 0; bottom: 0; width: 15%; display: flex; align-items: center; cursor: pointer; padding: 0 2rem; opacity: 0; transition: 0.3s; z-index: 10; }
-  .nav-area:hover { opacity: 1; }
-  .nav-left { left: 0; background: linear-gradient(to right, rgba(0,0,0,0.4), transparent); justify-content: flex-start; }
-  .nav-right { right: 0; background: linear-gradient(to left, rgba(0,0,0,0.4), transparent); justify-content: flex-end; }
 
   .badge { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.7rem; padding: 0.4rem 0.8rem; border-radius: 8px; font-weight: 700; letter-spacing: 0.08em; width: fit-content; text-transform: uppercase; border: 1.5px solid; }
   .badge.vip { background: rgba(192, 132, 252, 0.15); color: var(--color-vip); border-color: rgba(192, 132, 252, 0.4); }
@@ -180,38 +146,64 @@ const styles = `
   .badge.bad { background: rgba(248, 113, 113, 0.15); color: var(--color-bad); border-color: rgba(248, 113, 113, 0.4); }
   .avatar { width: 18px; height: 18px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--color-vip); }
 
+  /* == ADVANCED LIGHTBOX UI (Sliding Photo & Side Panel) == */
+  .lightbox-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.97); z-index: 100; display: flex; flex-direction: column; animation: fadeIn 0.3s ease; backdrop-filter: blur(5px); overflow: hidden; }
+  .lightbox-header { flex-shrink: 0; padding: 1.5rem 2.5rem; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.5); z-index: 10; border-bottom: 1px solid rgba(212, 175, 55, 0.2); }
+  .lightbox-controls { display: flex; gap: 1.2rem; align-items: center; }
+  .btn-icon { background: rgba(212, 175, 55, 0.15); border: 1.5px solid rgba(212, 175, 55, 0.4); color: white; width: 44px; height: 44px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; transition: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); display: flex; align-items: center; justify-content: center; font-weight: 600; }
+  .btn-icon:hover { background: rgba(212, 175, 55, 0.3); border-color: var(--gold-primary); transform: scale(1.1); }
+
+  .btn-action { display: flex; align-items: center; gap: 0.6rem; padding: 0.7rem 1.4rem; border-radius: 10px; font-family: 'Poppins', sans-serif; font-weight: 700; cursor: pointer; border: 1.5px solid; transition: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); font-size: 0.9rem; letter-spacing: 0.01em; }
+  .btn-action.caption-btn { background: rgba(157, 78, 221, 0.15); color: var(--purple-light); border-color: rgba(157, 78, 221, 0.5); }
+  .btn-action.caption-btn:hover:not(:disabled) { background: var(--purple-royal); color: #fff; border-color: var(--purple-light); transform: translateY(-2px); }
+  .btn-action:disabled { opacity: 0.6; cursor: not-allowed; }
+  .btn-keep { background: rgba(52, 211, 153, 0.15); color: var(--color-kept); border-color: rgba(52, 211, 153, 0.5); }
+  .btn-keep:hover { background: var(--color-kept); color: #000; transform: translateY(-2px); }
+  .btn-trash { background: rgba(248, 113, 113, 0.15); color: var(--color-bad); border-color: rgba(248, 113, 113, 0.5); }
+  .btn-trash:hover { background: var(--color-bad); color: #000; transform: translateY(-2px); }
+
+  /* Layout for sliding image */
+  .lightbox-body-wrapper { flex: 1; display: flex; position: relative; width: 100%; overflow: hidden; }
+
+  .lightbox-img-area { flex: 1; display: flex; align-items: center; justify-content: center; transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); position: relative; padding: 2rem; width: 100%; }
+  .lightbox-img-area.shifted { padding-right: 420px; } /* Shrinks the image space to make room for sidebar */
+
+  .lightbox-img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 12px; box-shadow: 0 0 60px rgba(212, 175, 55, 0.4); user-select: none; transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+  .nav-area { position: absolute; top: 0; bottom: 0; width: 12%; display: flex; align-items: center; cursor: pointer; padding: 0 1.5rem; opacity: 0; transition: 0.3s; z-index: 10; }
+  .nav-area:hover { opacity: 1; }
+  .nav-left { left: 0; background: linear-gradient(to right, rgba(0,0,0,0.5), transparent); justify-content: flex-start; }
+  .nav-right { right: 0; background: linear-gradient(to left, rgba(0,0,0,0.5), transparent); justify-content: flex-end; }
+
+  /* CAPTION SIDEBAR (Sliding in from Right) */
+  .caption-sidebar { position: absolute; right: 0; top: 0; bottom: 0; width: 400px; background: rgba(22, 22, 26, 0.95); border-left: 1px solid var(--purple-royal); padding: 2.5rem 2rem; display: flex; flex-direction: column; gap: 1.5rem; transform: translateX(100%); transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 20; backdrop-filter: blur(15px); box-shadow: -10px 0 40px rgba(0,0,0,0.6); overflow-y: auto; }
+  .caption-sidebar.open { transform: translateX(0); }
+
+  .caption-sidebar-header { font-family: 'Cinzel', serif; color: var(--purple-light); font-size: 1.4rem; font-weight: 700; border-bottom: 1px solid rgba(157, 78, 221, 0.3); padding-bottom: 1rem; display: flex; align-items: center; gap: 0.8rem; }
+
+  .caption-card { background: rgba(157, 78, 221, 0.08); border: 1px solid rgba(157, 78, 221, 0.25); border-radius: 12px; padding: 1.5rem; position: relative; animation: slideUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; opacity: 0; transition: 0.3s; color: var(--text-main); font-size: 0.95rem; line-height: 1.6; padding-right: 3rem; }
+  .caption-card:hover { background: rgba(157, 78, 221, 0.15); border-color: var(--purple-light); transform: translateY(-3px); box-shadow: 0 8px 25px rgba(157, 78, 221, 0.2); }
+
+  .copy-btn { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.4); border: 1px solid rgba(157, 78, 221, 0.4); border-radius: 6px; color: var(--text-muted); cursor: pointer; padding: 0.4rem; font-size: 0.9rem; transition: 0.3s; display: flex; align-items: center; justify-content: center; }
+  .copy-btn:hover { background: var(--purple-royal); color: #fff; border-color: var(--purple-light); }
+
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-  
   .spinner-small { width: 16px; height: 16px; border: 2.5px solid rgba(212, 175, 55, 0.3); border-top-color: var(--gold-primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  
   ::-webkit-scrollbar { width: 8px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: rgba(212, 175, 55, 0.3); border-radius: 10px; }
   ::-webkit-scrollbar-thumb:hover { background: rgba(212, 175, 55, 0.5); }
-  
-  @media (max-width: 768px) {
-    .sidebar { width: 240px; }
-    .main-canvas { margin-left: 240px; width: calc(100vw - 240px); padding: 2rem; overflow-y: auto; overflow-x: hidden; }
-    .login-card { padding: 2.5rem 1.5rem; }
-    .view-title { font-size: 2rem; }
-    .photo-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.5rem; }
-    .album-stat-row { gap: 2rem; }
-    .stat-num { font-size: 2rem; }
-  }
 `;
 
 function App() {
   const [user, setUser] = useState(null);
-  
   const [currentView, setCurrentView] = useState('upload');
   const [title, setTitle] = useState('');
-  
-  // NEW: targetFaces now stores objects: { id, file, customName }
+
   const [targetFaces, setTargetFaces] = useState([]);
-  
   const [photos, setPhotos] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
   const [formKey, setFormKey] = useState(0);
@@ -223,18 +215,21 @@ function App() {
   const [activeTab, setActiveTab] = useState('vips');
   const [lightboxIndex, setLightboxIndex] = useState(null);
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState(null);
-  const [isSearching, setIsSearching] = useState(false);
+  // Agent Chat State (Replacing old Search Bar)
+  const [chatQuery, setChatQuery] = useState('');
+  const [agentMessage, setAgentMessage] = useState(null);
+  const [agentPhotos, setAgentPhotos] = useState([]);
+  const [isAgentThinking, setIsAgentThinking] = useState(false);
+
+  // Caption State
+  const [lightboxCaptionsArray, setLightboxCaptionsArray] = useState([]);
+  const [isGeneratingCaption, setIsGeneratingCaption] = useState(false);
+  const [showCaptionSidebar, setShowCaptionSidebar] = useState(false);
 
   const [targetDropActive, setTargetDropActive] = useState(false);
   const [photoDropActive, setPhotoDropActive] = useState(false);
-
   const [isDownloading, setIsDownloading] = useState(false);
   const [isExportingDrive, setIsExportingDrive] = useState(false);
-  
-  const [agentMessage, setAgentMessage] = useState(null);
-  const [isAgentThinking, setIsAgentThinking] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
@@ -299,48 +294,73 @@ function App() {
       setCurrentView('gallery');
       setActiveTab('vips');
       setAgentMessage(null);
+      setAgentPhotos([]);
+      setChatQuery('');
     }
     try {
       const res = await axios.get(`${API_BASE}/albums/${id}`);
       setAlbumData(res.data || null);
-      
+
       if (!isSilentPoll && res.data?.results) {
         const vips = res.data.results.filter(p => p.has_target_face);
         if (vips.length === 0) setActiveTab('kept');
       }
 
       if (res.data?.processing_status === 'completed' && isSilentPoll) {
-        fetchHistory(); 
+        fetchHistory();
       }
     } catch (e) { console.error(e); }
   };
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim() || !albumId) return;
-    
-    setIsSearching(true);
+  const handleAskAperture = async () => {
+    if(!chatQuery.trim()) return;
+    setIsAgentThinking(true);
+    setAgentMessage(null);
+    setAgentPhotos([]);
     try {
-      // Use port 8001 for staging backend, or dynamically determine based on environment
-      const backendPort = window.location.port === '5173' ? '8001' : window.location.port;
-      const searchUrl = `${window.location.protocol}//${window.location.hostname}:${backendPort}/albums/${albumId}/search?q=${encodeURIComponent(searchQuery)}`;
-      
-      const res = await axios.get(searchUrl);
-      setSearchResults(res.data?.results || []);
-      setActiveTab('search');
+      const url = `${API_BASE}/albums/${albumId}/curator-chat`;
+      const res = await axios.post(url, { message: chatQuery });
+      setAgentMessage(res.data.agent_reply);
+      setAgentPhotos(res.data.photos);
+      setActiveTab('agent'); // Auto-switch to agent results!
     } catch (e) {
-      console.error('Search error:', e);
-      alert('Search failed. Make sure you are connecting to the staging backend on port 8001.');
+      console.error("Aperture AI Error:", e);
+      alert("Aperture AI failed to respond.");
     } finally {
-      setIsSearching(false);
+      setIsAgentThinking(false);
     }
   };
 
-  // --- NEW: Handle custom naming for VIP Targets ---
+  const generateCaptionForLightbox = async (photoId) => {
+    setIsGeneratingCaption(true);
+    setShowCaptionSidebar(true);
+    setLightboxCaptionsArray([]);
+    try {
+      const url = `${API_BASE}/photos/${photoId}/generate-caption`;
+      const response = await axios.post(url);
+
+      // Parse the clean 1., 2., 3. list from our strict prompt
+      const rawText = response.data.captions;
+      const splitArray = rawText.split(/\d+\.\s*/).filter(c => c.trim().length > 0);
+      setLightboxCaptionsArray(splitArray.length > 0 ? splitArray : [rawText]);
+
+    } catch (error) {
+      console.error("Failed to generate captions", error);
+      setLightboxCaptionsArray(["Failed to generate captions. Please try again."]);
+    } finally {
+      setIsGeneratingCaption(false);
+    }
+  };
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+  };
+
   const processTargetFiles = (files) => {
     const newFaces = Array.from(files).map((f, i) => ({
       id: Date.now() + i,
       file: f,
-      customName: f.name.split('.')[0] // Default to original filename
+      customName: f.name.split('.')[0]
     }));
     setTargetFaces(prev => [...prev, ...newFaces]);
   };
@@ -352,61 +372,43 @@ function App() {
   const removeTargetFace = (id) => {
     setTargetFaces(prev => prev.filter(face => face.id !== id));
   };
-  // ------------------------------------------------
 
   const handleUpload = async (e) => {
     e.preventDefault();
     if (!title || !photos || photos.length === 0) return;
-    setIsUploading(true); 
-    
+    setIsUploading(true);
+
     try {
       const albumForm = new FormData();
       albumForm.append('title', title);
-      
-      // NEW: Rename the File objects on the fly before sending!
+
       if (targetFaces && targetFaces.length > 0) {
         for (let i = 0; i < targetFaces.length; i++) {
           const faceObj = targetFaces[i];
           const ext = faceObj.file.name.split('.').pop() || 'jpg';
           const safeName = faceObj.customName.replace(/[^a-zA-Z0-9 ]/g, '').trim().replace(/ /g, '_') || 'VIP';
-          
-          // Magic trick: Create a new File object with the user's custom name!
           const renamedFile = new File([faceObj.file], `${safeName}.${ext}`, { type: faceObj.file.type });
           albumForm.append('target_faces', renamedFile);
         }
       }
-      
+
       const albumRes = await axios.post(`${API_BASE}/albums/`, albumForm);
       const newId = albumRes.data.album_id;
       setAlbumId(newId);
-      
+
       const photoForm = new FormData();
       for (let i = 0; i < photos.length; i++) {
         if(photos[i]?.name) photoForm.append('files', photos[i]);
       }
       await axios.post(`${API_BASE}/albums/${newId}/upload-photos/`, photoForm);
-      
+
       fetchHistory();
-      loadOldAlbum(newId); 
+      loadOldAlbum(newId);
     } catch (e) {
       console.error(e);
     } finally {
       setIsUploading(false);
       setTitle(''); setPhotos([]); setTargetFaces([]); setFormKey(prev => prev + 1);
-    }
-  };
-
-  const handleAskAperture = async () => {
-    setIsAgentThinking(true);
-    setAgentMessage(null);
-    try {
-      const res = await axios.post(`${API_BASE}/albums/${albumId}/curator-chat`);
-      setAgentMessage(res.data.agent_reply);
-    } catch (e) {
-      console.error("Aperture AI Error:", e);
-      alert("Aperture AI failed to respond. Please check your backend terminal.");
-    } finally {
-      setIsAgentThinking(false);
     }
   };
 
@@ -438,7 +440,6 @@ function App() {
     setIsDownloading(true);
     try {
       const res = await axios.get(`${API_BASE}/albums/${albumId}/download`, { responseType: 'blob' });
-      
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -487,7 +488,7 @@ function App() {
   const allPhotos = Array.isArray(albumData?.results) ? albumData.results : [];
   const safePastAlbums = Array.isArray(pastAlbums) ? pastAlbums : [];
   const totalPhotos = albumData?.total_photos || 0;
-  
+
   const processedCount = allPhotos.filter(p => p?.decision === 'kept' || p?.decision === 'trash').length;
   const progressPercent = totalPhotos > 0 ? Math.round((processedCount / totalPhotos) * 100) : 0;
 
@@ -504,22 +505,34 @@ function App() {
       case 'duplicates': return duplicates;
       case 'blurry': return blurryPhotos;
       case 'bad': return blinkPhotos;
-      case 'search': return searchResults || [];
+      case 'agent': return agentPhotos || [];
       default: return [];
     }
   };
   const activePhotos = getActivePhotos();
 
-  const openLightbox = (index) => setLightboxIndex(index);
-  const closeLightbox = () => setLightboxIndex(null);
-  
+  const openLightbox = (index) => {
+    setLightboxIndex(index);
+    setLightboxCaptionsArray([]);
+    setShowCaptionSidebar(false);
+  };
+  const closeLightbox = () => {
+    setLightboxIndex(null);
+    setLightboxCaptionsArray([]);
+    setShowCaptionSidebar(false);
+  };
+
   const handleNextPhoto = () => {
     if (activePhotos.length <= 1) return closeLightbox();
     setLightboxIndex((prev) => (prev + 1) % activePhotos.length);
+    setLightboxCaptionsArray([]);
+    setShowCaptionSidebar(false);
   };
   const handlePrevPhoto = () => {
     if (activePhotos.length <= 1) return closeLightbox();
     setLightboxIndex((prev) => (prev - 1 + activePhotos.length) % activePhotos.length);
+    setLightboxCaptionsArray([]);
+    setShowCaptionSidebar(false);
   };
 
   useEffect(() => {
@@ -556,12 +569,10 @@ function App() {
       <style>{styles}</style>
       <div className="animated-bg" />
       <div className="dashboard">
-        
         <aside className="sidebar">
           <div className="brand">
             <h1 className="brand-title">Smart Photo <span>Curator</span></h1>
           </div>
-          
           <div className="user-profile">
             <img src={user.picture || 'https://via.placeholder.com/40'} alt="Profile" className="user-avatar" />
             <div className="user-info">
@@ -569,7 +580,6 @@ function App() {
               <button className="btn-logout" onClick={handleLogout}>Logout</button>
             </div>
           </div>
-
           <div className="sidebar-content">
             <button className="btn-new-album" onClick={() => { setCurrentView('upload'); setAlbumId(null); }}>
               + Start New Curation
@@ -591,19 +601,17 @@ function App() {
         </aside>
 
         <main className="main-canvas">
-          
           {currentView === 'upload' && (
             <div className="upload-container">
               <div className="view-title">New Curation Job</div>
               <p className="view-subtitle">Upload your raw event dump and let the AI find the masterpieces.</p>
-              
               <div className="upload-card">
                 <form key={formKey} onSubmit={handleUpload}>
                   <div className="field">
                     <label className="label">Album/Event Title</label>
                     <input className="input" type="text" value={title} onChange={e => setTitle(e.target.value)} required placeholder="e.g. Ski Trip in the Alps 2026" />
                   </div>
-                  
+
                   <div className="field">
                     <label className="label">VIP Targets (Optional)</label>
                     <div className={`drop-zone small ${targetDropActive ? ' active' : ''}`} onDragOver={(e) => handleDragOver(e, setTargetDropActive)} onDragLeave={(e) => handleDragLeave(e, setTargetDropActive)} onDrop={handleDropTargets}>
@@ -612,21 +620,13 @@ function App() {
                         <div className="drop-label">Drop reference selfies here, then type their names below!</div>
                       </div>
                     </div>
-
-                    {/* NEW: Custom Naming UI for Target Faces */}
                     {targetFaces.length > 0 && (
                       <div style={{ marginTop: '1.5rem' }}>
                         <div className="label" style={{ fontSize: '0.8rem', color: 'var(--purple-light)' }}>Name your targets so the AI recognizes them:</div>
                         {targetFaces.map((face) => (
                           <div key={face.id} className="target-item">
                             <img src={URL.createObjectURL(face.file)} alt="Preview" />
-                            <input 
-                              type="text" 
-                              value={face.customName} 
-                              onChange={(e) => handleTargetNameChange(face.id, e.target.value)} 
-                              placeholder="Enter person's name..."
-                              required
-                            />
+                            <input type="text" value={face.customName} onChange={(e) => handleTargetNameChange(face.id, e.target.value)} placeholder="Enter person's name..." required />
                             <button type="button" onClick={() => removeTargetFace(face.id)}>✖</button>
                           </div>
                         ))}
@@ -645,7 +645,6 @@ function App() {
                       </div>
                     </div>
                   </div>
-
                   <button className="btn-submit" type="submit" disabled={isUploading || !photos?.length || !title}>
                     {isUploading ? 'Processing...' : '✨ Start AI Curation Pipeline'}
                   </button>
@@ -656,10 +655,9 @@ function App() {
 
           {currentView === 'gallery' && albumData && (
             <div className="gallery-container">
-              
               <div className="gallery-header">
                 <h2 className="view-title" style={{margin: 0}}>{albumData?.title || 'Album'}</h2>
-                
+
                 {albumData?.processing_status === 'completed' && (
                   <div className="header-actions">
                     <button className="btn-action-head" onClick={handleLocalDownload} disabled={isDownloading}>
@@ -671,37 +669,37 @@ function App() {
                     <button className="btn-action-head btn-delete" onClick={handleDeleteAlbum}>
                       🗑️ Delete
                     </button>
-                    
-                    <button className="btn-action-head" onClick={handleAskAperture} disabled={isAgentThinking} style={{ borderColor: 'var(--purple-royal)', color: 'var(--purple-light)' }}>
-                      {isAgentThinking ? <span className="spinner-small" style={{borderColor:'var(--purple-dim)', borderTopColor:'var(--purple-light)'}} /> : '🤖'} 
-                      {isAgentThinking ? 'Aperture is orchestrating...' : 'Ask Aperture AI'}
-                    </button>
                   </div>
                 )}
               </div>
 
-              {/* NEW: The Beautiful Animated Aperture AI Response Box */}
-              {agentMessage && (
-                <div className="aperture-container">
-                  <h3 className="aperture-title">✨ Aperture AI Analysis</h3>
-                  <div className="aperture-content">
-                    {agentMessage.split('\n').map((line, idx) => {
-                      if (!line.trim()) return null; 
-                      
-                      // Check if the line is an Instagram caption (starts with a number like "1.")
-                      const isCaption = /^\d+\./.test(line.trim());
-                      
-                      return (
-                        <div 
-                          key={idx} 
-                          className={isCaption ? "aperture-caption-card" : "aperture-line"}
-                          style={{ animationDelay: `${idx * 0.08}s` }} 
-                        >
-                          {line}
-                        </div>
-                      );
-                    })}
+              {/* APERTURE AI CHAT BLOCK */}
+              {albumData?.processing_status === 'completed' && (
+                <div style={{marginBottom: '2rem', padding: '1.5rem', backgroundColor: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--purple-royal)', boxShadow: '0 4px 15px rgba(157, 78, 221, 0.1)'}}>
+                  <div style={{display: 'flex', gap: '1rem', marginBottom: '1rem'}}>
+                    <input
+                      type="text"
+                      value={chatQuery}
+                      onChange={(e) => setChatQuery(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleAskAperture()}
+                      placeholder="Ask Aperture AI (e.g., 'Find photos of us laughing at sunset')"
+                      style={{flex: 1, padding: '1rem', borderRadius: '8px', border: '1px solid var(--purple-dim)', backgroundColor: 'var(--bg-dark)', color: 'white'}}
+                    />
+                    <button
+                      onClick={handleAskAperture}
+                      disabled={isAgentThinking || !chatQuery.trim()}
+                      style={{padding: '0 2rem', backgroundColor: isAgentThinking ? 'var(--text-muted)' : 'var(--purple-royal)', color: 'white', border: 'none', borderRadius: '8px', cursor: isAgentThinking ? 'not-allowed' : 'pointer', fontWeight: 'bold'}}
+                    >
+                      {isAgentThinking ? 'Thinking...' : '✨ Ask'}
+                    </button>
                   </div>
+
+                  {agentMessage && (
+                    <div className="aperture-container" style={{marginBottom: 0}}>
+                      <h3 className="aperture-title">✨ Aperture AI</h3>
+                      <div className="aperture-line">{agentMessage}</div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -736,37 +734,19 @@ function App() {
                   </div>
 
                   <div className="tabs-container">
+                    {agentPhotos.length > 0 && (
+                      <button className={`tab-btn ${activeTab === 'agent' ? 'active' : ''}`} onClick={() => setActiveTab('agent')} style={{color: 'var(--purple-light)'}}>✨ AI Results</button>
+                    )}
                     <button className={`tab-btn ${activeTab === 'vips' ? 'active' : ''}`} onClick={() => setActiveTab('vips')}>VIPs <span className="tab-count">{targetMatches.length}</span></button>
                     <button className={`tab-btn ${activeTab === 'kept' ? 'active' : ''}`} onClick={() => setActiveTab('kept')}>Keepers <span className="tab-count">{generalKeepers.length}</span></button>
                     <button className={`tab-btn ${activeTab === 'duplicates' ? 'active' : ''}`} onClick={() => setActiveTab('duplicates')}>Duplicates <span className="tab-count">{duplicates.length}</span></button>
                     <button className={`tab-btn ${activeTab === 'blurry' ? 'active' : ''}`} onClick={() => setActiveTab('blurry')}>Blurry <span className="tab-count">{blurryPhotos.length}</span></button>
                     <button className={`tab-btn ${activeTab === 'bad' ? 'active' : ''}`} onClick={() => setActiveTab('bad')}>Blinks & Bad <span className="tab-count">{blinkPhotos.length}</span></button>
-                    <button className={`tab-btn ${activeTab === 'search' ? 'active' : ''}`} onClick={() => { setActiveTab('search'); setSearchResults(null); }}>🔍 AI Search</button>
                   </div>
-
-                  {activeTab === 'search' && (
-                    <div style={{padding: '1.5rem', display: 'flex', gap: '1rem', marginBottom: '1.5rem', backgroundColor: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--gold-border)'}}>
-                      <input 
-                        type="text" 
-                        value={searchQuery} 
-                        onChange={(e) => setSearchQuery(e.target.value)} 
-                        onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                        placeholder="Ask AI to search (e.g., 'laughing at night', 'sunset with group')"
-                        style={{flex: 1, padding: '0.8rem 1rem', borderRadius: '8px', border: '1px solid var(--gold-dim)', backgroundColor: 'var(--bg-dark)', color: 'var(--text-main)', fontSize: '0.95rem'}}
-                      />
-                      <button 
-                        onClick={handleSearch} 
-                        disabled={isSearching || !searchQuery.trim()}
-                        style={{padding: '0.8rem 1.5rem', backgroundColor: isSearching ? 'var(--text-muted)' : 'var(--gold-primary)', color: 'var(--bg-dark)', border: 'none', borderRadius: '8px', cursor: isSearching ? 'not-allowed' : 'pointer', fontWeight: 'bold', transition: 'all 0.3s'}}
-                      >
-                        {isSearching ? '⏳ Searching...' : '🔍 Search'}
-                      </button>
-                    </div>
-                  )}
 
                   {activePhotos.length === 0 ? (
                     <div style={{padding: '3rem', textAlign: 'center', color: 'var(--text-muted)'}}>
-                      {activeTab === 'search' ? 'No photos found matching your search.' : 'No photos in this category.'}
+                      No photos in this category.
                     </div>
                   ) : (
                     <div className="photo-grid">
@@ -774,11 +754,11 @@ function App() {
                         if(!photo) return null;
                         const isSearchResult = photo.file_path && !photo.decision;
                         const cleanName = photo.matched_target_path ? photo.matched_target_path.replace(/^target_\d+_/, '').split('.')[0] : 'MATCH';
-                        const imgSrc = isSearchResult 
-                          ? `${API_BASE}/${photo.file_path}` 
+                        const imgSrc = isSearchResult
+                          ? photo.file_path.startsWith('http') ? photo.file_path : `${API_BASE}/${photo.file_path}`
                           : `${API_BASE}/uploads/${albumId}/${photo.filename}`;
-                        const title = isSearchResult ? photo.filename : photo.filename;
-                        
+                        const title = photo.filename;
+
                         return (
                           <div className={`photo-card ${photo.decision === 'trash' ? 'dimmed' : ''}`} key={photo.id || photo.photo_id} onClick={() => openLightbox(idx)}>
                             <img className="main-img" src={imgSrc} alt={title} loading="lazy" />
@@ -814,23 +794,61 @@ function App() {
         <div className="lightbox-overlay">
           <div className="lightbox-header">
             <div className="photo-filename" style={{fontSize: '1.1rem', color: 'white'}}>
-              {activePhotos[lightboxIndex].filename} 
+              {activePhotos[lightboxIndex].filename}
               <span style={{marginLeft:'1rem', color:'var(--text-muted)'}}>({lightboxIndex + 1} / {activePhotos.length})</span>
             </div>
             <div className="lightbox-controls">
+
+              <button
+                className="btn-action caption-btn"
+                onClick={() => generateCaptionForLightbox(activePhotos[lightboxIndex].id || activePhotos[lightboxIndex].photo_id)}
+                disabled={isGeneratingCaption || showCaptionSidebar}
+              >
+                {isGeneratingCaption ? <span className="spinner-small" /> : '✨'} {isGeneratingCaption ? 'Writing...' : 'Generate Caption'}
+              </button>
+
               {activePhotos[lightboxIndex].decision === 'trash' ? (
-                <button className="btn-action btn-keep" onClick={() => handleOverride(activePhotos[lightboxIndex].photo_id, 'kept', false, false)}>✨ Restore to Keepers</button>
+                <button className="btn-action btn-keep" onClick={() => handleOverride(activePhotos[lightboxIndex].photo_id, 'kept', false, false)}>✨ Restore</button>
               ) : (
-                <button className="btn-action btn-trash" onClick={() => handleOverride(activePhotos[lightboxIndex].photo_id, 'trash', false, false)}>🗑️ Move to Trash</button>
+                <button className="btn-action btn-trash" onClick={() => handleOverride(activePhotos[lightboxIndex].photo_id, 'trash', false, false)}>🗑️ Trash</button>
               )}
               <button className="btn-icon" onClick={closeLightbox}>✕</button>
             </div>
           </div>
-          
-          <div className="lightbox-content" onClick={closeLightbox}>
+
+          <div className="lightbox-body-wrapper">
             <div className="nav-area nav-left" onClick={(e) => { e.stopPropagation(); handlePrevPhoto(); }}><button className="btn-icon">⬅</button></div>
-            <img src={`${API_BASE}/uploads/${albumId}/${activePhotos[lightboxIndex].filename}`} alt="Fullscreen" className="lightbox-img" onClick={(e) => e.stopPropagation()} />
+
+            <div className={`lightbox-img-area ${showCaptionSidebar ? 'shifted' : ''}`} onClick={closeLightbox}>
+              <img src={activePhotos[lightboxIndex].file_path && activePhotos[lightboxIndex].file_path.startsWith('http') ? activePhotos[lightboxIndex].file_path : `${API_BASE}/uploads/${albumId}/${activePhotos[lightboxIndex].filename}`} alt="Fullscreen" className="lightbox-img" onClick={(e) => e.stopPropagation()} />
+            </div>
+
             <div className="nav-area nav-right" onClick={(e) => { e.stopPropagation(); handleNextPhoto(); }}><button className="btn-icon">➡</button></div>
+
+            {/* NEW SLIDING SIDEBAR FOR CAPTIONS */}
+            <div className={`caption-sidebar ${showCaptionSidebar ? 'open' : ''}`}>
+              <div className="caption-sidebar-header">
+                ✨ Aperture AI Captions
+              </div>
+
+              {isGeneratingCaption ? (
+                <div style={{color: 'var(--text-muted)', textAlign: 'center', marginTop: '2rem'}}>
+                  <div className="spinner-small" style={{margin: '0 auto 1rem auto', width: '30px', height: '30px', borderWidth: '3px'}}></div>
+                  <p>Analyzing image context...</p>
+                </div>
+              ) : (
+                <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
+                  {lightboxCaptionsArray.map((caption, idx) => (
+                    <div key={idx} className="caption-card" style={{ animationDelay: `${idx * 0.1}s` }}>
+                      <button className="copy-btn" onClick={() => copyToClipboard(caption)} title="Copy to clipboard">
+                        📋
+                      </button>
+                      {caption}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

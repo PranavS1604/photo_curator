@@ -4,8 +4,8 @@ services:
   redis:
     image: redis:alpine
     container_name: photo_curator_redis_test
-    ports:
-      - "6380:6379"
+    #ports:
+    #  - "6380:6379"
     restart: always
     # Redis is lightweight, cap it so it doesn't silently eat RAM
     mem_limit: 256m
@@ -60,7 +60,7 @@ services:
   frontend:
     build: ./photo_frontend
     ports:
-      - "80:80"
+      - "8080:80"
     depends_on:
       - backend
     restart: always
