@@ -10,7 +10,7 @@ Upload massive, messy folders of raw event photos, and our cloud-based pipeline 
 ![Caption-generation](sample-images/captions.png)
 
 ### 🔗 Quick Links
-* **[Watch the 3-Minute Demo Video](https://youtube.com...)**
+* **[Watch the 3-Minute Demo Video](https://youtu.be/oCr4bPGKRZ8)**
 * **[Live Demo Environment](http://157.245.110.211.nip.io:8080/)**
 
 ---
